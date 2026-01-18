@@ -1,9 +1,12 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Ip,
+  Param,
+  ParseUUIDPipe,
   Post,
   Req,
   UseGuards,
@@ -16,6 +19,8 @@ import { RequestUser } from '../../common/interfaces/request-user.interface';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { LogoutDto } from './dto/logout.dto';
+import { OtpRequestDto } from './dto/otp-request.dto';
+import { OtpVerifyDto } from './dto/otp-verify.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { RegisterDto } from './dto/register.dto';
 
@@ -49,6 +54,24 @@ export class AuthController {
     });
   }
 
+  @Post('otp/request')
+  @HttpCode(HttpStatus.OK)
+  async requestOtp(@Body() dto: OtpRequestDto, @Req() req: Request, @Ip() ip: string) {
+    return this.authService.requestOtp(dto, {
+      ipAddress: ip,
+      userAgent: req.get('user-agent') ?? undefined,
+    });
+  }
+
+  @Post('otp/verify')
+  @HttpCode(HttpStatus.OK)
+  async verifyOtp(@Body() dto: OtpVerifyDto, @Req() req: Request, @Ip() ip: string) {
+    return this.authService.verifyOtp(dto, {
+      ipAddress: ip,
+      userAgent: req.get('user-agent') ?? undefined,
+    });
+  }
+
   @Post('logout')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
@@ -59,6 +82,27 @@ export class AuthController {
     @Ip() ip: string,
   ) {
     return this.authService.logout(user, dto, {
+      ipAddress: ip,
+      userAgent: req.get('user-agent') ?? undefined,
+    });
+  }
+
+  @Get('sessions')
+  @UseGuards(JwtAuthGuard)
+  async listSessions(@CurrentUser() user: RequestUser) {
+    return this.authService.listSessions(user);
+  }
+
+  @Post('sessions/:id/revoke')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async revokeSession(
+    @CurrentUser() user: RequestUser,
+    @Param('id', new ParseUUIDPipe()) sessionId: string,
+    @Req() req: Request,
+    @Ip() ip: string,
+  ) {
+    return this.authService.revokeSessionById(user, sessionId, {
       ipAddress: ip,
       userAgent: req.get('user-agent') ?? undefined,
     });
