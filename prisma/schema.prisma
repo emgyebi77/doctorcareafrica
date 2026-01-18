@@ -1,0 +1,928 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RoleType {
+  PATIENT
+  DOCTOR
+  ADMIN
+  SUPER_ADMIN
+  SUPPORT
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  UNKNOWN
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum AppointmentType {
+  IN_PERSON
+  VIDEO
+  HOME_VISIT
+}
+
+enum AvailabilityType {
+  RECURRING
+  SPECIFIC_DATE
+}
+
+enum TimeSlotStatus {
+  AVAILABLE
+  BOOKED
+  BLOCKED
+}
+
+enum PaymentStatus {
+  PENDING
+  AUTHORIZED
+  CAPTURED
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CARD
+  MOBILE_MONEY
+  BANK_TRANSFER
+  CASH
+  WALLET
+}
+
+enum TransactionType {
+  CREDIT
+  DEBIT
+  REFUND
+  REVERSAL
+}
+
+enum TransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  CANCELLED
+}
+
+enum WalletStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum PrescriptionStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  EXPIRED
+}
+
+enum NotificationStatus {
+  UNREAD
+  READ
+}
+
+enum NotificationType {
+  APPOINTMENT
+  PAYMENT
+  SYSTEM
+  MEDICAL_RECORD
+  SECURITY
+}
+
+enum NotificationChannel {
+  EMAIL
+  SMS
+  PUSH
+  IN_APP
+}
+
+enum OtpChannel {
+  SMS
+  EMAIL
+}
+
+enum OtpPurpose {
+  LOGIN
+}
+
+enum AuthSessionStatus {
+  ACTIVE
+  REVOKED
+  EXPIRED
+}
+
+enum DoctorOnboardingStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+}
+
+enum KycDocumentType {
+  ID_CARD
+  LICENSE
+  CERTIFICATE
+  PROOF_OF_ADDRESS
+  OTHER
+}
+
+enum KycDocumentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum RefundStatus {
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+}
+
+enum WebhookProvider {
+  STRIPE
+  MOMO
+}
+
+enum WebhookStatus {
+  RECEIVED
+  PROCESSED
+  FAILED
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  VIEW
+  LOGIN
+  LOGOUT
+  EXPORT
+}
+
+enum VideoSessionStatus {
+  SCHEDULED
+  LIVE
+  ENDED
+  FAILED
+}
+
+model Country {
+  id             String   @id @default(uuid())
+  name           String
+  isoCode2       String   @unique
+  isoCode3       String   @unique
+  currency       String
+  currencySymbol String?
+  timezone       String
+  locale         String
+  jitsiRegion    String?
+  momoProvider   String?
+  momoProviders  Json?
+  supportedLocales Json?
+  dialingCode    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
+
+  regions Region[]
+  cities  City[]
+
+  @@index([name])
+}
+
+model Region {
+  id        String   @id @default(uuid())
+  countryId String
+  name      String
+  code      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  country Country @relation(fields: [countryId], references: [id])
+  cities  City[]
+
+  @@unique([countryId, name])
+  @@index([countryId])
+}
+
+model City {
+  id        String   @id @default(uuid())
+  countryId String
+  regionId  String
+  name      String
+  timezone  String?
+  locale    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  country Country @relation(fields: [countryId], references: [id])
+  region  Region  @relation(fields: [regionId], references: [id])
+
+  @@unique([regionId, name])
+  @@index([countryId])
+}
+
+model User {
+  id              String     @id @default(uuid())
+  email           String     @unique
+  phone           String?    @unique
+  passwordHash    String
+  firstName       String?
+  lastName        String?
+  displayName     String?
+  avatarUrl       String?
+  status          UserStatus @default(ACTIVE)
+  role            RoleType   @default(PATIENT)
+  countryId       String
+  regionId        String?
+  cityId          String?
+  timezone        String?
+  locale          String?
+  emailVerifiedAt DateTime?
+  phoneVerifiedAt DateTime?
+  lastLoginAt     DateTime?
+  metadata        Json?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  deletedAt       DateTime?
+
+  country Country @relation(fields: [countryId], references: [id])
+  region  Region? @relation(fields: [regionId], references: [id])
+  city    City?   @relation(fields: [cityId], references: [id])
+
+  patient       Patient?
+  doctor        Doctor?
+  admin         Admin?
+  notifications Notification[]
+  auditLogs     AuditLog[]
+  videoTokens   VideoToken[]
+  attachments   Attachment[]
+  aiLogs        AiLog[]
+  refreshTokens RefreshToken[]
+  authSessions  AuthSession[]
+  otpChallenges OtpChallenge[]
+
+  @@index([countryId])
+  @@index([status])
+}
+
+model RefreshToken {
+  id           String   @id @default(uuid())
+  userId       String
+  countryId    String
+  sessionId    String?
+  tokenHash    String   @unique
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  replacedById String?
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user       User          @relation(fields: [userId], references: [id])
+  country    Country       @relation(fields: [countryId], references: [id])
+  session    AuthSession?  @relation(fields: [sessionId], references: [id])
+  replacedBy RefreshToken? @relation("RefreshTokenRotation", fields: [replacedById], references: [id])
+  replaces   RefreshToken[] @relation("RefreshTokenRotation")
+
+  @@index([userId])
+  @@index([countryId])
+  @@index([sessionId])
+  @@index([expiresAt])
+  @@index([revokedAt])
+  @@index([replacedById])
+}
+
+model AuthSession {
+  id          String             @id @default(uuid())
+  userId      String
+  countryId   String
+  status      AuthSessionStatus  @default(ACTIVE)
+  ipAddress   String?
+  userAgent   String?
+  lastUsedAt  DateTime?
+  revokedAt   DateTime?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id])
+  country      Country       @relation(fields: [countryId], references: [id])
+  refreshTokens RefreshToken[]
+
+  @@index([userId])
+  @@index([countryId])
+  @@index([status])
+  @@index([lastUsedAt])
+}
+
+model OtpChallenge {
+  id          String     @id @default(uuid())
+  userId      String
+  countryId   String
+  channel     OtpChannel
+  purpose     OtpPurpose
+  destination String
+  codeHash    String
+  attempts    Int        @default(0)
+  maxAttempts Int        @default(5)
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  user     User    @relation(fields: [userId], references: [id])
+  country  Country @relation(fields: [countryId], references: [id])
+
+  @@index([userId])
+  @@index([countryId])
+  @@index([destination])
+  @@index([expiresAt])
+  @@index([consumedAt])
+}
+
+model DoctorOnboarding {
+  id               String                 @id @default(uuid())
+  doctorId         String                 @unique
+  countryId        String
+  status           DoctorOnboardingStatus @default(DRAFT)
+  submittedAt      DateTime?
+  reviewedAt       DateTime?
+  reviewedByUserId String?
+  reviewNotes      String?
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+  deletedAt        DateTime?
+
+  doctor     Doctor  @relation(fields: [doctorId], references: [id])
+  country    Country @relation(fields: [countryId], references: [id])
+  reviewedBy User?   @relation(fields: [reviewedByUserId], references: [id])
+
+  @@index([doctorId])
+  @@index([countryId])
+  @@index([status])
+  @@index([reviewedByUserId])
+}
+
+model DoctorKycDocument {
+  id               String            @id @default(uuid())
+  doctorId         String
+  countryId        String
+  attachmentId     String
+  type             KycDocumentType
+  status           KycDocumentStatus @default(PENDING)
+  reviewedAt       DateTime?
+  reviewedByUserId String?
+  reviewNotes      String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  deletedAt        DateTime?
+
+  doctor     Doctor     @relation(fields: [doctorId], references: [id])
+  country    Country    @relation(fields: [countryId], references: [id])
+  attachment Attachment @relation(fields: [attachmentId], references: [id])
+  reviewedBy User?      @relation(fields: [reviewedByUserId], references: [id])
+
+  @@index([doctorId])
+  @@index([countryId])
+  @@index([type])
+  @@index([status])
+  @@index([reviewedByUserId])
+}
+
+model Patient {
+  id                    String   @id @default(uuid())
+  userId                String   @unique
+  countryId             String
+  regionId              String?
+  cityId                String?
+  dateOfBirth           DateTime?
+  gender                Gender   @default(UNKNOWN)
+  bloodType             String?
+  emergencyContactName  String?
+  emergencyContactPhone String?
+  insuranceProvider     String?
+  insuranceNumber       String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  deletedAt             DateTime?
+
+  user      User    @relation(fields: [userId], references: [id])
+  country   Country @relation(fields: [countryId], references: [id])
+  region    Region? @relation(fields: [regionId], references: [id])
+  city      City?   @relation(fields: [cityId], references: [id])
+  record    MedicalRecord?
+  appointments Appointment[]
+  encounters   Encounter[]
+  prescriptions Prescription[]
+  payments     Payment[]
+  aiLogs       AiLog[]
+
+  @@index([countryId])
+}
+
+model Doctor {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  countryId       String
+  regionId        String?
+  cityId          String?
+  licenseNumber   String?  @unique
+  specialty       String?
+  yearsExperience Int?
+  bio             String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  deletedAt       DateTime?
+
+  user          User          @relation(fields: [userId], references: [id])
+  country       Country       @relation(fields: [countryId], references: [id])
+  region        Region?       @relation(fields: [regionId], references: [id])
+  city          City?         @relation(fields: [cityId], references: [id])
+  availabilities Availability[]
+  timeSlots     TimeSlot[]
+  appointments  Appointment[]
+  medicalRecords MedicalRecord[]
+  encounters    Encounter[]
+  prescriptions Prescription[]
+  payments      Payment[]
+  aiLogs        AiLog[]
+  onboarding    DoctorOnboarding?
+  kycDocuments  DoctorKycDocument[]
+
+  @@index([countryId])
+  @@index([specialty])
+}
+
+model Admin {
+  id         String   @id @default(uuid())
+  userId     String   @unique
+  countryId  String
+  roleTitle  String?
+  department String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  deletedAt  DateTime?
+
+  user    User    @relation(fields: [userId], references: [id])
+  country Country @relation(fields: [countryId], references: [id])
+
+  @@index([countryId])
+}
+
+model Availability {
+  id        String           @id @default(uuid())
+  doctorId  String
+  countryId String
+  type      AvailabilityType
+  dayOfWeek Int?
+  date      DateTime?
+  startTime DateTime
+  endTime   DateTime
+  timezone  String
+  isActive  Boolean          @default(true)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  deletedAt DateTime?
+
+  doctor   Doctor   @relation(fields: [doctorId], references: [id])
+  country  Country  @relation(fields: [countryId], references: [id])
+  timeSlots TimeSlot[]
+
+  @@index([doctorId])
+  @@index([countryId])
+}
+
+model TimeSlot {
+  id            String         @id @default(uuid())
+  availabilityId String
+  doctorId      String
+  countryId     String
+  startTime     DateTime
+  endTime       DateTime
+  timezone      String
+  status        TimeSlotStatus @default(AVAILABLE)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  deletedAt     DateTime?
+
+  availability Availability @relation(fields: [availabilityId], references: [id])
+  doctor      Doctor       @relation(fields: [doctorId], references: [id])
+  country     Country      @relation(fields: [countryId], references: [id])
+  appointment Appointment? @relation("TimeSlotAppointment")
+
+  @@index([doctorId, startTime])
+  @@index([status])
+}
+
+model Appointment {
+  id         String            @id @default(uuid())
+  patientId  String
+  doctorId   String
+  timeSlotId String?           @unique
+  countryId  String
+  startTime  DateTime
+  endTime    DateTime
+  timezone   String
+  currency   String?
+  type       AppointmentType   @default(IN_PERSON)
+  status     AppointmentStatus @default(SCHEDULED)
+  reason     String?
+  notes      String?
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+  deletedAt  DateTime?
+
+  patient     Patient     @relation(fields: [patientId], references: [id])
+  doctor      Doctor      @relation(fields: [doctorId], references: [id])
+  country     Country     @relation(fields: [countryId], references: [id])
+  timeSlot    TimeSlot?   @relation("TimeSlotAppointment", fields: [timeSlotId], references: [id])
+  payment     Payment?
+  videoSession VideoSession?
+  encounters  Encounter[]
+
+  @@index([patientId, startTime])
+  @@index([doctorId, startTime])
+  @@index([status])
+  @@index([countryId])
+}
+
+model Wallet {
+  id        String       @id @default(uuid())
+  userId    String       @unique
+  countryId String
+  balance   Decimal      @default(0) @db.Decimal(12, 2)
+  currency  String
+  status    WalletStatus @default(ACTIVE)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  deletedAt DateTime?
+
+  user         User         @relation(fields: [userId], references: [id])
+  country      Country      @relation(fields: [countryId], references: [id])
+  transactions Transaction[]
+  payments     Payment[]
+
+  @@index([countryId])
+}
+
+model Payment {
+  id            String        @id @default(uuid())
+  appointmentId String?       @unique
+  patientId     String
+  doctorId      String
+  walletId      String?
+  countryId     String
+  amount        Decimal       @db.Decimal(12, 2)
+  currency      String
+  status        PaymentStatus @default(PENDING)
+  method        PaymentMethod
+  provider      String?
+  reference     String?       @unique
+  paidAt        DateTime?
+  metadata      Json?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  deletedAt     DateTime?
+
+  appointment Appointment? @relation(fields: [appointmentId], references: [id])
+  patient     Patient      @relation(fields: [patientId], references: [id])
+  doctor      Doctor       @relation(fields: [doctorId], references: [id])
+  wallet      Wallet?      @relation(fields: [walletId], references: [id])
+  country     Country      @relation(fields: [countryId], references: [id])
+  transactions Transaction[]
+  refunds      PaymentRefund[]
+
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([status])
+  @@index([countryId])
+}
+
+model PaymentRefund {
+  id               String       @id @default(uuid())
+  paymentId        String
+  countryId        String
+  amount           Decimal      @db.Decimal(12, 2)
+  currency         String
+  status           RefundStatus @default(PENDING)
+  reason           String?
+  providerReference String?
+  processedAt      DateTime?
+  metadata         Json?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  deletedAt        DateTime?
+
+  payment Payment @relation(fields: [paymentId], references: [id])
+  country Country @relation(fields: [countryId], references: [id])
+
+  @@index([paymentId])
+  @@index([countryId])
+  @@index([status])
+}
+
+model WebhookEvent {
+  id          String         @id @default(uuid())
+  provider    WebhookProvider
+  eventType   String
+  externalId  String
+  paymentId   String?
+  countryId   String?
+  signature   String?
+  payload     Json
+  status      WebhookStatus  @default(RECEIVED)
+  errorMessage String?
+  receivedAt  DateTime       @default(now())
+  processedAt DateTime?
+
+  payment Payment? @relation(fields: [paymentId], references: [id])
+  country Country? @relation(fields: [countryId], references: [id])
+
+  @@unique([provider, externalId])
+  @@index([paymentId])
+  @@index([countryId])
+  @@index([status])
+  @@index([receivedAt])
+}
+
+model Transaction {
+  id         String            @id @default(uuid())
+  walletId   String
+  paymentId  String?
+  countryId  String
+  type       TransactionType
+  status     TransactionStatus @default(PENDING)
+  amount     Decimal           @db.Decimal(12, 2)
+  currency   String
+  reference  String?
+  metadata   Json?
+  occurredAt DateTime?
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+  deletedAt  DateTime?
+
+  wallet  Wallet   @relation(fields: [walletId], references: [id])
+  payment Payment? @relation(fields: [paymentId], references: [id])
+  country Country  @relation(fields: [countryId], references: [id])
+
+  @@index([walletId, createdAt])
+  @@index([paymentId])
+  @@index([status])
+}
+
+model MedicalRecord {
+  id              String   @id @default(uuid())
+  patientId       String   @unique
+  primaryDoctorId String?
+  countryId       String
+  summary         String?
+  allergies       Json?
+  conditions      Json?
+  medications     Json?
+  metadata        Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  deletedAt       DateTime?
+
+  patient        Patient    @relation(fields: [patientId], references: [id])
+  primaryDoctor  Doctor?    @relation(fields: [primaryDoctorId], references: [id])
+  country        Country    @relation(fields: [countryId], references: [id])
+  encounters     Encounter[]
+  attachments    Attachment[]
+
+  @@index([countryId])
+  @@index([primaryDoctorId])
+}
+
+model Encounter {
+  id             String   @id @default(uuid())
+  medicalRecordId String
+  patientId      String
+  doctorId       String
+  appointmentId  String?
+  countryId      String
+  occurredAt     DateTime
+  chiefComplaint String?
+  diagnosis      String?
+  notes          String?
+  vitals         Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
+
+  medicalRecord MedicalRecord @relation(fields: [medicalRecordId], references: [id])
+  patient      Patient       @relation(fields: [patientId], references: [id])
+  doctor       Doctor        @relation(fields: [doctorId], references: [id])
+  appointment  Appointment?  @relation(fields: [appointmentId], references: [id])
+  country      Country       @relation(fields: [countryId], references: [id])
+  prescriptions Prescription[]
+  attachments   Attachment[]
+  aiLogs        AiLog[]
+
+  @@index([patientId, occurredAt])
+  @@index([doctorId, occurredAt])
+  @@index([appointmentId])
+  @@index([countryId])
+}
+
+model Prescription {
+  id            String             @id @default(uuid())
+  encounterId   String
+  patientId     String
+  doctorId      String
+  countryId     String
+  medicationName String
+  dosage        String
+  frequency     String
+  durationDays  Int?
+  instructions  String?
+  status        PrescriptionStatus @default(ACTIVE)
+  startDate     DateTime?
+  endDate       DateTime?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  deletedAt     DateTime?
+
+  encounter   Encounter  @relation(fields: [encounterId], references: [id])
+  patient     Patient    @relation(fields: [patientId], references: [id])
+  doctor      Doctor     @relation(fields: [doctorId], references: [id])
+  country     Country    @relation(fields: [countryId], references: [id])
+  attachments Attachment[]
+
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([status])
+  @@index([countryId])
+}
+
+model Attachment {
+  id              String   @id @default(uuid())
+  medicalRecordId String?
+  encounterId     String?
+  prescriptionId  String?
+  uploadedByUserId String
+  countryId       String
+  fileName        String
+  fileUrl         String
+  mimeType        String
+  sizeBytes       Int
+  checksum        String?
+  storageProvider String?
+  metadata        Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  deletedAt       DateTime?
+
+  medicalRecord MedicalRecord? @relation(fields: [medicalRecordId], references: [id])
+  encounter     Encounter?     @relation(fields: [encounterId], references: [id])
+  prescription  Prescription?  @relation(fields: [prescriptionId], references: [id])
+  uploadedBy    User           @relation(fields: [uploadedByUserId], references: [id])
+  country       Country        @relation(fields: [countryId], references: [id])
+
+  @@index([medicalRecordId])
+  @@index([encounterId])
+  @@index([prescriptionId])
+  @@index([countryId])
+}
+
+model Notification {
+  id        String             @id @default(uuid())
+  userId    String
+  countryId String
+  type      NotificationType
+  channel   NotificationChannel
+  title     String
+  message   String
+  status    NotificationStatus @default(UNREAD)
+  readAt    DateTime?
+  metadata  Json?
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  deletedAt DateTime?
+
+  user    User    @relation(fields: [userId], references: [id])
+  country Country @relation(fields: [countryId], references: [id])
+
+  @@index([userId, status])
+  @@index([createdAt])
+}
+
+model AuditLog {
+  id          String      @id @default(uuid())
+  actorUserId String?
+  countryId   String?
+  action      AuditAction
+  entityType  String
+  entityId    String
+  description String?
+  ipAddress   String?
+  userAgent   String?
+  metadata    Json?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  actorUser User?   @relation(fields: [actorUserId], references: [id])
+  country   Country? @relation(fields: [countryId], references: [id])
+
+  @@index([actorUserId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+model VideoSession {
+  id           String            @id @default(uuid())
+  appointmentId String           @unique
+  countryId    String
+  provider     String
+  jitsiRegion  String?
+  status       VideoSessionStatus @default(SCHEDULED)
+  roomId       String?
+  joinUrl      String?
+  startedAt    DateTime?
+  endedAt      DateTime?
+  metadata     Json?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  deletedAt    DateTime?
+
+  appointment Appointment  @relation(fields: [appointmentId], references: [id])
+  country     Country      @relation(fields: [countryId], references: [id])
+  tokens      VideoToken[]
+
+  @@index([status])
+  @@index([countryId])
+  @@index([jitsiRegion])
+}
+
+model VideoToken {
+  id            String   @id @default(uuid())
+  videoSessionId String
+  userId        String
+  token         String   @unique
+  expiresAt     DateTime
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  videoSession VideoSession @relation(fields: [videoSessionId], references: [id])
+  user        User         @relation(fields: [userId], references: [id])
+
+  @@index([videoSessionId])
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model AiLog {
+  id           String   @id @default(uuid())
+  userId       String?
+  patientId    String?
+  doctorId     String?
+  encounterId  String?
+  countryId    String?
+  model        String
+  prompt       String
+  response     String?
+  inputTokens  Int?
+  outputTokens Int?
+  latencyMs    Int?
+  cost         Decimal? @db.Decimal(12, 4)
+  metadata     Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  deletedAt    DateTime?
+
+  user      User?     @relation(fields: [userId], references: [id])
+  patient   Patient?  @relation(fields: [patientId], references: [id])
+  doctor    Doctor?   @relation(fields: [doctorId], references: [id])
+  encounter Encounter? @relation(fields: [encounterId], references: [id])
+  country   Country?  @relation(fields: [countryId], references: [id])
+
+  @@index([userId])
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([encounterId])
+  @@index([createdAt])
+}
