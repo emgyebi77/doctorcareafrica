@@ -33,6 +33,8 @@ Operational logging
 - `AiLog` stores AI interactions and can link to `User`, `Patient`, `Doctor`,
   and/or `Encounter`.
 - `RefreshToken` stores hashed refresh tokens for session rotation.
+- `AuthSession` tracks active login sessions.
+- `OtpChallenge` stores one-time codes for OTP login.
 
 ## Migration command
 

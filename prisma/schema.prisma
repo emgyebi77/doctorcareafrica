@@ -116,6 +116,21 @@ enum NotificationChannel {
   IN_APP
 }
 
+enum OtpChannel {
+  SMS
+  EMAIL
+}
+
+enum OtpPurpose {
+  LOGIN
+}
+
+enum AuthSessionStatus {
+  ACTIVE
+  REVOKED
+  EXPIRED
+}
+
 enum AuditAction {
   CREATE
   UPDATE
@@ -224,6 +239,8 @@ model User {
   attachments   Attachment[]
   aiLogs        AiLog[]
   refreshTokens RefreshToken[]
+  authSessions  AuthSession[]
+  otpChallenges OtpChallenge[]
 
   @@index([countryId])
   @@index([status])
@@ -233,6 +250,7 @@ model RefreshToken {
   id           String   @id @default(uuid())
   userId       String
   countryId    String
+  sessionId    String?
   tokenHash    String   @unique
   expiresAt    DateTime
   revokedAt    DateTime?
@@ -244,14 +262,63 @@ model RefreshToken {
 
   user       User          @relation(fields: [userId], references: [id])
   country    Country       @relation(fields: [countryId], references: [id])
+  session    AuthSession?  @relation(fields: [sessionId], references: [id])
   replacedBy RefreshToken? @relation("RefreshTokenRotation", fields: [replacedById], references: [id])
   replaces   RefreshToken[] @relation("RefreshTokenRotation")
 
   @@index([userId])
   @@index([countryId])
+  @@index([sessionId])
   @@index([expiresAt])
   @@index([revokedAt])
   @@index([replacedById])
+}
+
+model AuthSession {
+  id          String             @id @default(uuid())
+  userId      String
+  countryId   String
+  status      AuthSessionStatus  @default(ACTIVE)
+  ipAddress   String?
+  userAgent   String?
+  lastUsedAt  DateTime?
+  revokedAt   DateTime?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id])
+  country      Country       @relation(fields: [countryId], references: [id])
+  refreshTokens RefreshToken[]
+
+  @@index([userId])
+  @@index([countryId])
+  @@index([status])
+  @@index([lastUsedAt])
+}
+
+model OtpChallenge {
+  id          String     @id @default(uuid())
+  userId      String
+  countryId   String
+  channel     OtpChannel
+  purpose     OtpPurpose
+  destination String
+  codeHash    String
+  attempts    Int        @default(0)
+  maxAttempts Int        @default(5)
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  user     User    @relation(fields: [userId], references: [id])
+  country  Country @relation(fields: [countryId], references: [id])
+
+  @@index([userId])
+  @@index([countryId])
+  @@index([destination])
+  @@index([expiresAt])
+  @@index([consumedAt])
 }
 
 model Patient {
