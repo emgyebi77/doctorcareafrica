@@ -11,6 +11,7 @@ describe('AI (e2e)', () => {
   let app: INestApplication;
   const aiService = {
     triage: jest.fn(),
+    symptomGuidance: jest.fn(),
   };
 
   beforeAll(async () => {
@@ -43,6 +44,15 @@ describe('AI (e2e)', () => {
     await request(app.getHttpServer())
       .post('/api/v1/ai/triage')
       .send({ symptoms: 'Headache for two days.' })
+      .expect(200);
+  });
+
+  it('POST /ai/symptom-guidance returns response', async () => {
+    aiService.symptomGuidance.mockResolvedValue({ response: 'ok', logId: 'log-id' });
+
+    await request(app.getHttpServer())
+      .post('/api/v1/ai/symptom-guidance')
+      .send({ symptoms: 'Mild headache', duration: '1 day' })
       .expect(200);
   });
 });

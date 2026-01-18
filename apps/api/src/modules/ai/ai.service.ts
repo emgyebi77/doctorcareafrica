@@ -12,6 +12,7 @@ import { AiFollowUpDto } from './dto/ai-followup.dto';
 import { AiLogQueryDto } from './dto/ai-log-query.dto';
 import { AiSummaryDto } from './dto/ai-summary.dto';
 import { AiTranslateDto } from './dto/ai-translate.dto';
+import { AiSymptomGuidanceDto } from './dto/ai-symptom-guidance.dto';
 import { AiTriageDto } from './dto/ai-triage.dto';
 
 interface RequestMeta {
@@ -29,6 +30,10 @@ export class AiService {
 
   async triage(user: RequestUser, dto: AiTriageDto, meta: RequestMeta) {
     return this.generate(user, 'triage', AI_TEMPLATES.triage(dto), meta);
+  }
+
+  async symptomGuidance(user: RequestUser, dto: AiSymptomGuidanceDto, meta: RequestMeta) {
+    return this.generate(user, 'symptomGuidance', AI_TEMPLATES.symptomGuidance(dto), meta);
   }
 
   async summary(user: RequestUser, dto: AiSummaryDto, meta: RequestMeta) {
@@ -115,6 +120,9 @@ export class AiService {
   }
 
   private mockResponse(feature: AiFeature) {
+    if (feature === 'symptomGuidance') {
+      return 'This is general guidance and not a diagnosis. Seek urgent care if symptoms worsen.';
+    }
     return `AI ${feature} response placeholder.`;
   }
 

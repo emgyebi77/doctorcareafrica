@@ -1,4 +1,21 @@
 export const AI_TEMPLATES = {
+  symptomGuidance: (payload: {
+    symptoms: string;
+    duration?: string;
+    age?: number;
+    context?: string;
+  }) =>
+    [
+      'You are a non-diagnostic symptom guidance assistant.',
+      'Provide general, educational guidance without diagnosing.',
+      'Advise when to seek urgent care based on red-flag symptoms.',
+      `Symptoms: ${payload.symptoms}`,
+      payload.duration ? `Duration: ${payload.duration}` : undefined,
+      payload.age ? `Age: ${payload.age}` : undefined,
+      payload.context ? `Context: ${payload.context}` : undefined,
+    ]
+      .filter(Boolean)
+      .join('\n'),
   triage: (payload: { symptoms: string; duration?: string; age?: number; gender?: string }) =>
     [
       'You are a clinical triage assistant.',

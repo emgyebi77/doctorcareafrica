@@ -44,6 +44,21 @@ describe('AiService', () => {
     ).resolves.toEqual({ response: 'AI summary response placeholder.', logId: 'log-id' });
   });
 
+  it('returns non-diagnostic symptom guidance', async () => {
+    prisma.aiLog.create.mockResolvedValue({ id: 'log-id' } as never);
+
+    await expect(
+      service.symptomGuidance(
+        { id: 'user-id', role: RoleType.PATIENT, patientId: 'patient-id', countryId: 'country-id' },
+        { symptoms: 'Mild headache', duration: '1 day' },
+        {},
+      ),
+    ).resolves.toEqual({
+      response: 'This is general guidance and not a diagnosis. Seek urgent care if symptoms worsen.',
+      logId: 'log-id',
+    });
+  });
+
   it('blocks log access for non-admin', async () => {
     await expect(
       service.listLogs(

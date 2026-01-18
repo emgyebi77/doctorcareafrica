@@ -24,6 +24,7 @@ import { AiFollowUpDto } from './dto/ai-followup.dto';
 import { AiLogQueryDto } from './dto/ai-log-query.dto';
 import { AiSummaryDto } from './dto/ai-summary.dto';
 import { AiTranslateDto } from './dto/ai-translate.dto';
+import { AiSymptomGuidanceDto } from './dto/ai-symptom-guidance.dto';
 import { AiTriageDto } from './dto/ai-triage.dto';
 
 @Controller('ai')
@@ -41,6 +42,21 @@ export class AiController {
     @Ip() ip: string,
   ) {
     return this.aiService.triage(user, dto, {
+      ipAddress: ip,
+      userAgent: req.get('user-agent') ?? undefined,
+    });
+  }
+
+  @Post('symptom-guidance')
+  @Roles(RoleType.PATIENT, RoleType.DOCTOR, RoleType.ADMIN, RoleType.SUPER_ADMIN)
+  @HttpCode(HttpStatus.OK)
+  async symptomGuidance(
+    @CurrentUser() user: RequestUser,
+    @Body() dto: AiSymptomGuidanceDto,
+    @Req() req: Request,
+    @Ip() ip: string,
+  ) {
+    return this.aiService.symptomGuidance(user, dto, {
       ipAddress: ip,
       userAgent: req.get('user-agent') ?? undefined,
     });
