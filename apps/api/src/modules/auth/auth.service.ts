@@ -21,6 +21,7 @@ import * as bcrypt from 'bcryptjs';
 import { createHash, randomBytes } from 'crypto';
 
 import { AuditService } from '../../common/audit/audit.service';
+import { CountryService } from '../../common/country/country.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AUTH_CONFIG } from './auth.constants';
 import { AuthTokens } from './auth.types';
@@ -65,6 +66,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly auditService: AuditService,
+    private readonly countryService: CountryService,
   ) {}
 
   async register(dto: RegisterDto, meta: AuthRequestMeta) {
@@ -72,6 +74,13 @@ export class AuthService {
     if (role === RoleType.ADMIN || role === RoleType.SUPER_ADMIN || role === RoleType.SUPPORT) {
       throw new BadRequestException('Role not allowed for self-registration.');
     }
+
+    const { timezone, locale } = await this.countryService.resolveLocalization({
+      countryId: dto.countryId,
+      cityId: dto.cityId,
+      timezone: dto.timezone,
+      locale: dto.locale,
+    });
 
     const orConditions = [{ email: dto.email }];
     if (dto.phone) {
@@ -99,8 +108,8 @@ export class AuthService {
           countryId: dto.countryId,
           regionId: dto.regionId,
           cityId: dto.cityId,
-          timezone: dto.timezone,
-          locale: dto.locale,
+          timezone,
+          locale,
         },
       });
 
@@ -618,6 +627,8 @@ export class AuthService {
       countryId: user.countryId,
       regionId: user.regionId,
       cityId: user.cityId,
+      timezone: user.timezone,
+      locale: user.locale,
       patientId: profileIds.patientId ?? null,
       doctorId: profileIds.doctorId ?? null,
       adminId: profileIds.adminId ?? null,

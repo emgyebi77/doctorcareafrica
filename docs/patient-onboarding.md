@@ -50,6 +50,9 @@ Profile setup
   - `timezone`: `Africa/Accra`
   - `locale`: `en-GH`
 
+Countries response highlights
+- `GET /api/v1/patient-onboarding/countries` returns currency, locale, and provider defaults.
+
 Emergency contact
 - PATCH `/api/v1/patient-onboarding/emergency-contact`
 - Authorization: `Bearer <access-token>`

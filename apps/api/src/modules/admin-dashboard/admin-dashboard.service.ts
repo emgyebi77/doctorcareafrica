@@ -123,6 +123,10 @@ export class AdminDashboardService {
         currencySymbol: dto.currencySymbol,
         timezone: dto.timezone,
         locale: dto.locale,
+        supportedLocales: dto.supportedLocales,
+        jitsiRegion: dto.jitsiRegion,
+        momoProvider: dto.momoProvider,
+        momoProviders: dto.momoProviders,
         dialingCode: dto.dialingCode,
       },
     });
@@ -148,6 +152,10 @@ export class AdminDashboardService {
         currencySymbol: dto.currencySymbol,
         timezone: dto.timezone,
         locale: dto.locale,
+        supportedLocales: dto.supportedLocales,
+        jitsiRegion: dto.jitsiRegion,
+        momoProvider: dto.momoProvider,
+        momoProviders: dto.momoProviders,
         dialingCode: dto.dialingCode,
       },
     });

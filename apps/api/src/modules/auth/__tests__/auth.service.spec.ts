@@ -6,6 +6,7 @@ import * as bcrypt from 'bcryptjs';
 
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AuditService } from '../../../common/audit/audit.service';
+import { CountryService } from '../../../common/country/country.service';
 import { AuthService } from '../auth.service';
 
 jest.mock('bcryptjs', () => ({
@@ -19,6 +20,7 @@ describe('AuthService', () => {
   let jwtService: jest.Mocked<JwtService>;
   let configService: jest.Mocked<ConfigService>;
   let auditService: jest.Mocked<AuditService>;
+  let countryService: jest.Mocked<CountryService>;
 
   beforeEach(() => {
     prisma = {
@@ -47,7 +49,23 @@ describe('AuthService', () => {
     jwtService = { signAsync: jest.fn() } as unknown as jest.Mocked<JwtService>;
     configService = { get: jest.fn() } as unknown as jest.Mocked<ConfigService>;
     auditService = { logAction: jest.fn() } as unknown as jest.Mocked<AuditService>;
-    service = new AuthService(prisma, jwtService, configService, auditService);
+    countryService = { resolveLocalization: jest.fn() } as unknown as jest.Mocked<CountryService>;
+    countryService.resolveLocalization.mockResolvedValue({
+      country: {
+        id: 'country-id',
+        currency: 'GHS',
+        currencySymbol: '₵',
+        timezone: 'Africa/Accra',
+        locale: 'en-GH',
+        jitsiRegion: null,
+        momoProvider: null,
+        momoProviders: null,
+        supportedLocales: null,
+      },
+      timezone: 'Africa/Accra',
+      locale: 'en-GH',
+    });
+    service = new AuthService(prisma, jwtService, configService, auditService, countryService);
     configService.get.mockImplementation((_key: string, defaultValue?: string | number) => defaultValue);
   });
 

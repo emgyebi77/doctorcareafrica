@@ -17,6 +17,7 @@ import {
 } from '@prisma/client';
 
 import { AuditService } from '../../common/audit/audit.service';
+import { CountryService } from '../../common/country/country.service';
 import { RequestUser } from '../../common/interfaces/request-user.interface';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BookAppointmentDto } from './dto/book-appointment.dto';
@@ -35,6 +36,7 @@ export class AppointmentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditService: AuditService,
+    private readonly countryService: CountryService,
   ) {}
 
   async createAvailability(user: RequestUser, dto: CreateAvailabilityDto, meta: RequestMeta) {
@@ -155,6 +157,8 @@ export class AppointmentsService {
       throw new ForbiddenException('Time slot is not available in your country.');
     }
 
+    const country = await this.countryService.getCountrySettings(user.countryId);
+
     const appointment = await this.prisma.$transaction(async (tx) => {
       const appointment = await tx.appointment.create({
         data: {
@@ -165,6 +169,7 @@ export class AppointmentsService {
           startTime: slot.startTime,
           endTime: slot.endTime,
           timezone: slot.timezone,
+          currency: country.currency,
           type: dto.type ?? AppointmentType.IN_PERSON,
           status: AppointmentStatus.SCHEDULED,
           reason: dto.reason,

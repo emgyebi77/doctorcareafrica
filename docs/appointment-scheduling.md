@@ -69,6 +69,7 @@ Cancel appointment
 - Availability and time slots require a timezone identifier.
 - Appointments inherit the timezone from the booked time slot.
 - All timestamps are stored as `DateTime` and should be sent in ISO format.
+- Appointment currency defaults to the user's country currency.
 
 ## UI screens
 

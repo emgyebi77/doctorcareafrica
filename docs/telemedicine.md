@@ -66,3 +66,5 @@ Integration tests:
 
 - `JITSI_DOMAIN` config controls the join URL base.
 - `jitsiRegion` is optional and used for multi-region routing.
+- If `jitsiRegion` is omitted, the country default is applied.
+- Session details include localized appointment times derived from the appointment timezone.

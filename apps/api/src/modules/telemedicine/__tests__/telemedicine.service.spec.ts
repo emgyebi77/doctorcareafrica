@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { AppointmentStatus, AppointmentType, RoleType, VideoSessionStatus } from '@prisma/client';
 
 import { AuditService } from '../../../common/audit/audit.service';
+import { CountryService } from '../../../common/country/country.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { TelemedicineService } from '../telemedicine.service';
 
@@ -11,6 +12,7 @@ describe('TelemedicineService', () => {
   let prisma: jest.Mocked<PrismaService>;
   let auditService: jest.Mocked<AuditService>;
   let configService: jest.Mocked<ConfigService>;
+  let countryService: jest.Mocked<CountryService>;
 
   beforeEach(() => {
     prisma = {
@@ -22,7 +24,25 @@ describe('TelemedicineService', () => {
     auditService = { logAction: jest.fn() } as unknown as jest.Mocked<AuditService>;
     configService = { get: jest.fn() } as unknown as jest.Mocked<ConfigService>;
     configService.get.mockImplementation((_key: string, defaultValue?: string | number) => defaultValue);
-    service = new TelemedicineService(prisma, auditService, configService);
+    countryService = {
+      getCountrySettings: jest.fn(),
+      resolveJitsiRegion: jest.fn(),
+      formatInTimeZone: jest.fn(),
+    } as unknown as jest.Mocked<CountryService>;
+    countryService.getCountrySettings.mockResolvedValue({
+      id: 'country-id',
+      currency: 'GHS',
+      currencySymbol: '₵',
+      timezone: 'Africa/Accra',
+      locale: 'en-GH',
+      jitsiRegion: 'africa',
+      momoProvider: null,
+      momoProviders: null,
+      supportedLocales: null,
+    });
+    countryService.resolveJitsiRegion.mockReturnValue('africa');
+    countryService.formatInTimeZone.mockReturnValue('2025-01-01T10:00:00');
+    service = new TelemedicineService(prisma, auditService, configService, countryService);
   });
 
   it('rejects non-video appointment session creation', async () => {

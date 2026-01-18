@@ -22,6 +22,7 @@ import {
 import { createHmac, randomBytes } from 'crypto';
 
 import { AuditService } from '../../common/audit/audit.service';
+import { CountryService } from '../../common/country/country.service';
 import { RequestUser } from '../../common/interfaces/request-user.interface';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateCheckoutDto } from './dto/create-checkout.dto';
@@ -40,6 +41,7 @@ export class PaymentsService {
     private readonly prisma: PrismaService,
     private readonly auditService: AuditService,
     private readonly configService: ConfigService,
+    private readonly countryService: CountryService,
   ) {}
 
   async createCheckout(user: RequestUser, dto: CreateCheckoutDto, meta: RequestMeta) {
@@ -52,6 +54,8 @@ export class PaymentsService {
     if (provider === 'MOMO' && !dto.momoPhone) {
       throw new BadRequestException('momoPhone is required for MoMo payments.');
     }
+
+    const country = await this.countryService.getCountrySettings(user.countryId);
 
     const appointment = dto.appointmentId
       ? await this.prisma.appointment.findFirst({
@@ -66,13 +70,30 @@ export class PaymentsService {
     if (appointment && appointment.patientId !== user.patientId) {
       throw new ForbiddenException('Appointment does not belong to the patient.');
     }
+    if (appointment && appointment.countryId !== user.countryId) {
+      throw new ForbiddenException('Appointment is not available in your country.');
+    }
 
     const doctorId = appointment?.doctorId ?? dto.doctorId;
     if (!doctorId) {
       throw new BadRequestException('doctorId is required when no appointment is provided.');
     }
 
-    const wallet = await this.getOrCreateWallet(user.id, user.countryId, dto.currency);
+    const resolvedCurrency = this.countryService.resolveCurrency(
+      country,
+      appointment?.currency ?? dto.currency,
+    );
+    if (appointment?.currency && dto.currency && appointment.currency !== dto.currency) {
+      throw new BadRequestException('Currency does not match appointment currency.');
+    }
+
+    const momoProvider =
+      provider === 'MOMO' ? this.countryService.resolveMomoProvider(country, dto.momoPhone) : null;
+    if (provider === 'MOMO' && !momoProvider) {
+      throw new BadRequestException('MoMo provider is not configured for this country.');
+    }
+
+    const wallet = await this.getOrCreateWallet(user.id, user.countryId, resolvedCurrency);
     const reference = this.buildReference(provider);
 
     const payment = await this.prisma.$transaction(async (tx) => {
@@ -84,7 +105,7 @@ export class PaymentsService {
           walletId: wallet.id,
           countryId: user.countryId,
           amount: dto.amount,
-          currency: dto.currency,
+          currency: resolvedCurrency,
           status: PaymentStatus.PENDING,
           method,
           provider,
@@ -93,6 +114,7 @@ export class PaymentsService {
             returnUrl: dto.returnUrl,
             callbackUrl: dto.callbackUrl,
             momoPhone: dto.momoPhone,
+            momoProvider,
           },
         },
       });
@@ -105,7 +127,7 @@ export class PaymentsService {
           type: TransactionType.DEBIT,
           status: TransactionStatus.PENDING,
           amount: dto.amount,
-          currency: dto.currency,
+          currency: resolvedCurrency,
           reference,
         },
       });
@@ -133,6 +155,7 @@ export class PaymentsService {
           provider === 'MOMO'
             ? `Approve the request on ${dto.momoPhone}`
             : undefined,
+        momoProvider: provider === 'MOMO' ? momoProvider : undefined,
       },
     };
   }

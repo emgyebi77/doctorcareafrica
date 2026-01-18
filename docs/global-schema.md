@@ -7,6 +7,7 @@ including the entity relationships, migration command, and extension rules.
 
 Identity and geography
 - `Country` → `Region` → `City` define multi-country geography.
+- `Country` stores default currency, locale/timezone, Jitsi region, and MoMo provider mappings.
 - `User` is the core identity and references `Country`/`Region`/`City`.
 - `Patient`, `Doctor`, and `Admin` are 1:1 profiles mapped to `User`.
 

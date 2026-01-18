@@ -1,14 +1,10 @@
-import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { AuditAction, OtpChannel, RoleType } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 import { randomBytes } from 'crypto';
 
 import { AuditService } from '../../common/audit/audit.service';
+import { CountryService } from '../../common/country/country.service';
 import { RequestUser } from '../../common/interfaces/request-user.interface';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthService } from '../auth/auth.service';
@@ -29,16 +25,13 @@ export class PatientOnboardingService {
     private readonly prisma: PrismaService,
     private readonly authService: AuthService,
     private readonly auditService: AuditService,
+    private readonly countryService: CountryService,
   ) {}
 
   async requestPhoneOtp(dto: PhoneOtpRequestDto, meta: RequestMeta) {
-    const country = await this.prisma.country.findUnique({
-      where: { id: dto.countryId },
-      select: { id: true },
+    const { timezone, locale } = await this.countryService.resolveLocalization({
+      countryId: dto.countryId,
     });
-    if (!country) {
-      throw new BadRequestException('Invalid country.');
-    }
 
     let user = await this.prisma.user.findFirst({
       where: { phone: dto.phone, deletedAt: null },
@@ -55,6 +48,8 @@ export class PatientOnboardingService {
             passwordHash,
             role: RoleType.PATIENT,
             countryId: dto.countryId,
+            timezone,
+            locale,
           },
           include: { patient: { select: { id: true } } },
         });
@@ -106,8 +101,14 @@ export class PatientOnboardingService {
         name: true,
         isoCode2: true,
         currency: true,
+        currencySymbol: true,
         timezone: true,
         locale: true,
+        dialingCode: true,
+        jitsiRegion: true,
+        momoProvider: true,
+        momoProviders: true,
+        supportedLocales: true,
       },
     });
     return { countries };
@@ -118,6 +119,13 @@ export class PatientOnboardingService {
       throw new ForbiddenException('Patient profile not found.');
     }
 
+    const { timezone, locale } = await this.countryService.resolveLocalization({
+      countryId: user.countryId,
+      cityId: dto.cityId,
+      timezone: dto.timezone,
+      locale: dto.locale,
+    });
+
     await this.prisma.$transaction(async (tx) => {
       await tx.user.update({
         where: { id: user.id },
@@ -126,8 +134,8 @@ export class PatientOnboardingService {
           lastName: dto.lastName,
           regionId: dto.regionId,
           cityId: dto.cityId,
-          timezone: dto.timezone,
-          locale: dto.locale,
+          timezone,
+          locale,
         },
       });
       await tx.patient.update({

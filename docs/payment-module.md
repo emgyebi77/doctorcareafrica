@@ -30,7 +30,7 @@ Checkout (MoMo)
 - Authorization: `Bearer <access-token>`
 - Body:
   - `amount`: `50`
-  - `currency`: `GHS`
+  - `currency`: `GHS` (optional; defaults to country currency)
   - `provider`: `MOMO`
   - `momoPhone`: `+23300000000`
 
@@ -91,3 +91,8 @@ Integration tests:
 - Admin-only access for confirm and monitoring endpoints.
 - Webhooks verify HMAC signatures using shared secrets.
 - Webhook events are stored for auditability and replay protection.
+
+## Multi-country handling
+
+- Currency defaults to the country currency and is validated on checkout.
+- MoMo checkouts resolve a country-specific provider mapping.

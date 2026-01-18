@@ -2,6 +2,7 @@ import { ForbiddenException } from '@nestjs/common';
 import { DoctorOnboardingStatus, OtpChannel, RoleType } from '@prisma/client';
 
 import { AuditService } from '../../../common/audit/audit.service';
+import { CountryService } from '../../../common/country/country.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AuthService } from '../../auth/auth.service';
 import { DoctorOnboardingService } from '../doctor-onboarding.service';
@@ -11,6 +12,7 @@ describe('DoctorOnboardingService', () => {
   let prisma: jest.Mocked<PrismaService>;
   let authService: jest.Mocked<AuthService>;
   let auditService: jest.Mocked<AuditService>;
+  let countryService: jest.Mocked<CountryService>;
 
   beforeEach(() => {
     prisma = {
@@ -30,11 +32,40 @@ describe('DoctorOnboardingService', () => {
       verifyOtp: jest.fn(),
     } as unknown as jest.Mocked<AuthService>;
     auditService = { logAction: jest.fn() } as unknown as jest.Mocked<AuditService>;
-    service = new DoctorOnboardingService(prisma, authService, auditService);
+    countryService = {
+      getCountrySettings: jest.fn(),
+      resolveLocalization: jest.fn(),
+    } as unknown as jest.Mocked<CountryService>;
+    countryService.getCountrySettings.mockResolvedValue({
+      id: 'country-id',
+      currency: 'GHS',
+      currencySymbol: '₵',
+      timezone: 'Africa/Accra',
+      locale: 'en-GH',
+      jitsiRegion: null,
+      momoProvider: null,
+      momoProviders: null,
+      supportedLocales: null,
+    });
+    countryService.resolveLocalization.mockResolvedValue({
+      country: {
+        id: 'country-id',
+        currency: 'GHS',
+        currencySymbol: '₵',
+        timezone: 'Africa/Accra',
+        locale: 'en-GH',
+        jitsiRegion: null,
+        momoProvider: null,
+        momoProviders: null,
+        supportedLocales: null,
+      },
+      timezone: 'Africa/Accra',
+      locale: 'en-GH',
+    });
+    service = new DoctorOnboardingService(prisma, authService, auditService, countryService);
   });
 
   it('creates doctor user and requests OTP', async () => {
-    prisma.country.findUnique.mockResolvedValue({ id: 'country-id' } as never);
     prisma.user.findFirst.mockResolvedValue(null);
     prisma.$transaction.mockImplementation(async (callback) =>
       callback({

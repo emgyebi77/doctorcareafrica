@@ -2,6 +2,7 @@ import { ForbiddenException } from '@nestjs/common';
 import { RoleType } from '@prisma/client';
 
 import { AuditService } from '../../../common/audit/audit.service';
+import { CountryService } from '../../../common/country/country.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AuthService } from '../../auth/auth.service';
 import { PatientOnboardingService } from '../patient-onboarding.service';
@@ -11,6 +12,7 @@ describe('PatientOnboardingService', () => {
   let prisma: jest.Mocked<PrismaService>;
   let authService: jest.Mocked<AuthService>;
   let auditService: jest.Mocked<AuditService>;
+  let countryService: jest.Mocked<CountryService>;
 
   beforeEach(() => {
     prisma = {
@@ -25,11 +27,26 @@ describe('PatientOnboardingService', () => {
       verifyOtp: jest.fn(),
     } as unknown as jest.Mocked<AuthService>;
     auditService = { logAction: jest.fn() } as unknown as jest.Mocked<AuditService>;
-    service = new PatientOnboardingService(prisma, authService, auditService);
+    countryService = { resolveLocalization: jest.fn() } as unknown as jest.Mocked<CountryService>;
+    countryService.resolveLocalization.mockResolvedValue({
+      country: {
+        id: 'country-id',
+        currency: 'GHS',
+        currencySymbol: '₵',
+        timezone: 'Africa/Accra',
+        locale: 'en-GH',
+        jitsiRegion: null,
+        momoProvider: null,
+        momoProviders: null,
+        supportedLocales: null,
+      },
+      timezone: 'Africa/Accra',
+      locale: 'en-GH',
+    });
+    service = new PatientOnboardingService(prisma, authService, auditService, countryService);
   });
 
   it('creates user when requesting phone OTP', async () => {
-    prisma.country.findUnique.mockResolvedValue({ id: 'country-id' } as never);
     prisma.user.findFirst.mockResolvedValue(null);
     prisma.$transaction.mockImplementation(async (callback) =>
       callback({

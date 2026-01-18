@@ -2,6 +2,7 @@ import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { AppointmentStatus, AvailabilityType, RoleType, TimeSlotStatus } from '@prisma/client';
 
 import { AuditService } from '../../../common/audit/audit.service';
+import { CountryService } from '../../../common/country/country.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AppointmentsService } from '../appointments.service';
 
@@ -9,6 +10,7 @@ describe('AppointmentsService', () => {
   let service: AppointmentsService;
   let prisma: jest.Mocked<PrismaService>;
   let auditService: jest.Mocked<AuditService>;
+  let countryService: jest.Mocked<CountryService>;
 
   beforeEach(() => {
     prisma = {
@@ -21,7 +23,19 @@ describe('AppointmentsService', () => {
       $transaction: jest.fn(),
     } as unknown as jest.Mocked<PrismaService>;
     auditService = { logAction: jest.fn() } as unknown as jest.Mocked<AuditService>;
-    service = new AppointmentsService(prisma, auditService);
+    countryService = { getCountrySettings: jest.fn() } as unknown as jest.Mocked<CountryService>;
+    countryService.getCountrySettings.mockResolvedValue({
+      id: 'country-id',
+      currency: 'GHS',
+      currencySymbol: '₵',
+      timezone: 'Africa/Accra',
+      locale: 'en-GH',
+      jitsiRegion: null,
+      momoProvider: null,
+      momoProviders: null,
+      supportedLocales: null,
+    });
+    service = new AppointmentsService(prisma, auditService, countryService);
   });
 
   it('books an appointment and reserves the slot', async () => {

@@ -18,6 +18,7 @@ import * as bcrypt from 'bcryptjs';
 import { randomBytes } from 'crypto';
 
 import { AuditService } from '../../common/audit/audit.service';
+import { CountryService } from '../../common/country/country.service';
 import { RequestUser } from '../../common/interfaces/request-user.interface';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthService } from '../auth/auth.service';
@@ -40,17 +41,12 @@ export class DoctorOnboardingService {
     private readonly prisma: PrismaService,
     private readonly authService: AuthService,
     private readonly auditService: AuditService,
+    private readonly countryService: CountryService,
   ) {}
 
   async requestOtp(dto: DoctorOtpRequestDto, meta: RequestMeta) {
     const identifier = this.getIdentifier(dto);
-    const country = await this.prisma.country.findUnique({
-      where: { id: dto.countryId },
-      select: { id: true },
-    });
-    if (!country) {
-      throw new BadRequestException('Invalid country.');
-    }
+    await this.countryService.getCountrySettings(dto.countryId);
 
     const user = await this.getOrCreateDoctorUser(dto, identifier);
     await this.authService.requestOtp({ identifier, channel: dto.channel }, meta);
@@ -104,6 +100,13 @@ export class DoctorOnboardingService {
       throw new ForbiddenException('Doctor profile not found.');
     }
 
+    const { timezone, locale } = await this.countryService.resolveLocalization({
+      countryId: user.countryId,
+      cityId: dto.cityId,
+      timezone: dto.timezone,
+      locale: dto.locale,
+    });
+
     await this.prisma.$transaction(async (tx) => {
       await tx.user.update({
         where: { id: user.id },
@@ -112,8 +115,8 @@ export class DoctorOnboardingService {
           lastName: dto.lastName,
           regionId: dto.regionId,
           cityId: dto.cityId,
-          timezone: dto.timezone,
-          locale: dto.locale,
+          timezone,
+          locale,
         },
       });
       await tx.doctor.update({
@@ -513,6 +516,10 @@ export class DoctorOnboardingService {
         : `${randomBytes(12).toString('hex')}@placeholder.local`;
     const phone = dto.channel === OtpChannel.SMS ? (dto.phone as string) : undefined;
 
+    const { timezone, locale } = await this.countryService.resolveLocalization({
+      countryId: dto.countryId,
+    });
+
     return this.prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
         data: {
@@ -521,6 +528,8 @@ export class DoctorOnboardingService {
           passwordHash,
           role: RoleType.DOCTOR,
           countryId: dto.countryId,
+          timezone,
+          locale,
         },
       });
       const doctor = await tx.doctor.create({

@@ -133,7 +133,7 @@ Frontend modules
 Backend modules
 - Auth and access control
 - Users, patients, doctors, admins
-- Geo (multi-country configs)
+- Geo (multi-country configs, locale/timezone, currency, routing)
 - Scheduling (availability, time slots, appointments)
 - Billing (payments, wallets, transactions)
 - Medical records (records, encounters, prescriptions, attachments)

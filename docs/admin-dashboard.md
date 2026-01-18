@@ -55,6 +55,10 @@ Create country
   - `currency`: `GHS`
   - `timezone`: `Africa/Accra`
   - `locale`: `en-GH`
+  - `supportedLocales`: `["en-GH", "fr"]`
+  - `jitsiRegion`: `africa`
+  - `momoProvider`: `MTN`
+  - `momoProviders`: `{ "+233": "MTN", "default": "MTN" }`
 
 ## UI pages
 

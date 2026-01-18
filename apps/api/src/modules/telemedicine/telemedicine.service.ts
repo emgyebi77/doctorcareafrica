@@ -15,6 +15,7 @@ import {
 import { randomBytes } from 'crypto';
 
 import { AuditService } from '../../common/audit/audit.service';
+import { CountryService } from '../../common/country/country.service';
 import { RequestUser } from '../../common/interfaces/request-user.interface';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateVideoSessionDto } from './dto/create-video-session.dto';
@@ -30,6 +31,7 @@ export class TelemedicineService {
     private readonly prisma: PrismaService,
     private readonly auditService: AuditService,
     private readonly configService: ConfigService,
+    private readonly countryService: CountryService,
   ) {}
 
   async createSession(user: RequestUser, dto: CreateVideoSessionDto, meta: RequestMeta) {
@@ -56,13 +58,15 @@ export class TelemedicineService {
     }
 
     const roomId = this.generateRoomId(dto.appointmentId);
-    const joinUrl = this.buildJoinUrl(roomId, dto.jitsiRegion);
+    const country = await this.countryService.getCountrySettings(appointment.countryId);
+    const jitsiRegion = this.countryService.resolveJitsiRegion(country, dto.jitsiRegion);
+    const joinUrl = this.buildJoinUrl(roomId, jitsiRegion);
     const session = await this.prisma.videoSession.create({
       data: {
         appointmentId: appointment.id,
         countryId: appointment.countryId,
         provider: 'JITSI',
-        jitsiRegion: dto.jitsiRegion,
+        jitsiRegion,
         status: VideoSessionStatus.SCHEDULED,
         roomId,
         joinUrl,
@@ -192,6 +196,9 @@ export class TelemedicineService {
     }
     this.assertSessionAccess(user, session.appointment.patientId, session.appointment.doctorId);
 
+    const country = await this.countryService.getCountrySettings(session.countryId);
+    const appointmentTimezone = session.appointment.timezone ?? country.timezone;
+
     return {
       session: {
         id: session.id,
@@ -207,7 +214,18 @@ export class TelemedicineService {
         id: session.appointment.id,
         startTime: session.appointment.startTime,
         endTime: session.appointment.endTime,
-        timezone: session.appointment.timezone,
+        timezone: appointmentTimezone,
+        localStartTime: this.countryService.formatInTimeZone(
+          session.appointment.startTime,
+          appointmentTimezone,
+          country.locale,
+        ),
+        localEndTime: this.countryService.formatInTimeZone(
+          session.appointment.endTime,
+          appointmentTimezone,
+          country.locale,
+        ),
+        locale: country.locale,
       },
       patient: {
         id: session.appointment.patient.id,
