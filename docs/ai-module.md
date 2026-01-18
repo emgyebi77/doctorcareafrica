@@ -15,6 +15,7 @@ Location: `apps/api/src/modules/ai`
   - `ai-education.dto.ts`
   - `ai-translate.dto.ts`
   - `ai-log-query.dto.ts`
+- `ai-specialty-routing.dto.ts`
 
 ## API routes
 
@@ -22,6 +23,7 @@ Base path: `/api/v1/ai`
 - `POST /triage`
 - `POST /symptom-guidance`
 - `POST /summary`
+- `POST /specialty-routing`
 - `POST /followup`
 - `POST /education`
 - `POST /translate`
@@ -48,6 +50,13 @@ Summary
 - POST `/api/v1/ai/summary`
 - Body:
   - `notes`: `Patient reports headache, no nausea.`
+
+Specialty routing
+- POST `/api/v1/ai/specialty-routing`
+- Body:
+  - `symptoms`: `Chest pain`
+  - `age`: `45`
+  - `context`: `Symptoms with exertion`
 
 Follow-up
 - POST `/api/v1/ai/followup`
