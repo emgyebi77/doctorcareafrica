@@ -194,3 +194,4 @@ Operational
 - Centralized logging (Railway + external aggregator)
 - Metrics and alerting (Sentry, OpenTelemetry)
 - Backups for PostgreSQL with retention policies
+- Structured logs, metrics, and tracing are defined in `docs/observability.md`.

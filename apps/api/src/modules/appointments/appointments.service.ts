@@ -18,6 +18,7 @@ import {
 
 import { AuditService } from '../../common/audit/audit.service';
 import { CountryService } from '../../common/country/country.service';
+import { AnalyticsService } from '../../common/observability/analytics.service';
 import { RequestUser } from '../../common/interfaces/request-user.interface';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BookAppointmentDto } from './dto/book-appointment.dto';
@@ -37,6 +38,7 @@ export class AppointmentsService {
     private readonly prisma: PrismaService,
     private readonly auditService: AuditService,
     private readonly countryService: CountryService,
+    private readonly analyticsService: AnalyticsService,
   ) {}
 
   async createAvailability(user: RequestUser, dto: CreateAvailabilityDto, meta: RequestMeta) {
@@ -200,6 +202,15 @@ export class AppointmentsService {
       description: 'Appointment booked.',
       meta,
     });
+    this.analyticsService.track(
+      'appointment_booked',
+      { type: appointment.type },
+      {
+        userId: user.id,
+        countryId: user.countryId,
+        source: 'appointments.book',
+      },
+    );
 
     return { success: true, appointmentId: appointment.id };
   }
@@ -285,6 +296,15 @@ export class AppointmentsService {
       description: 'Appointment rescheduled.',
       meta,
     });
+    this.analyticsService.track(
+      'appointment_rescheduled',
+      { appointmentId: appointment.id },
+      {
+        userId: user.id,
+        countryId: appointment.countryId,
+        source: 'appointments.reschedule',
+      },
+    );
 
     return { success: true };
   }
@@ -344,6 +364,15 @@ export class AppointmentsService {
       description: 'Appointment cancelled.',
       meta,
     });
+    this.analyticsService.track(
+      'appointment_cancelled',
+      { appointmentId: appointment.id },
+      {
+        userId: user.id,
+        countryId: appointment.countryId,
+        source: 'appointments.cancel',
+      },
+    );
 
     return { success: true };
   }

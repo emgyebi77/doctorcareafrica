@@ -7,6 +7,7 @@ import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AuditService } from '../../../common/audit/audit.service';
 import { CountryService } from '../../../common/country/country.service';
+import { AnalyticsService } from '../../../common/observability/analytics.service';
 import { AuthService } from '../auth.service';
 
 jest.mock('bcryptjs', () => ({
@@ -21,6 +22,7 @@ describe('AuthService', () => {
   let configService: jest.Mocked<ConfigService>;
   let auditService: jest.Mocked<AuditService>;
   let countryService: jest.Mocked<CountryService>;
+  let analyticsService: jest.Mocked<AnalyticsService>;
 
   beforeEach(() => {
     prisma = {
@@ -65,7 +67,15 @@ describe('AuthService', () => {
       timezone: 'Africa/Accra',
       locale: 'en-GH',
     });
-    service = new AuthService(prisma, jwtService, configService, auditService, countryService);
+    analyticsService = { track: jest.fn() } as unknown as jest.Mocked<AnalyticsService>;
+    service = new AuthService(
+      prisma,
+      jwtService,
+      configService,
+      auditService,
+      countryService,
+      analyticsService,
+    );
     configService.get.mockImplementation((_key: string, defaultValue?: string | number) => defaultValue);
   });
 

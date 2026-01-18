@@ -4,6 +4,7 @@ import { PaymentStatus, RefundStatus, RoleType, TransactionStatus } from '@prism
 
 import { AuditService } from '../../../common/audit/audit.service';
 import { CountryService } from '../../../common/country/country.service';
+import { AnalyticsService } from '../../../common/observability/analytics.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { PaymentsService } from '../payments.service';
 
@@ -13,6 +14,7 @@ describe('PaymentsService', () => {
   let auditService: jest.Mocked<AuditService>;
   let configService: jest.Mocked<ConfigService>;
   let countryService: jest.Mocked<CountryService>;
+  let analyticsService: jest.Mocked<AnalyticsService>;
 
   beforeEach(() => {
     prisma = {
@@ -34,7 +36,14 @@ describe('PaymentsService', () => {
       resolveMomoProvider: jest.fn(),
     } as unknown as jest.Mocked<CountryService>;
     configService.get.mockImplementation((_key: string, defaultValue?: string | number) => defaultValue);
-    service = new PaymentsService(prisma, auditService, configService, countryService);
+    analyticsService = { track: jest.fn() } as unknown as jest.Mocked<AnalyticsService>;
+    service = new PaymentsService(
+      prisma,
+      auditService,
+      configService,
+      countryService,
+      analyticsService,
+    );
   });
 
   it('creates checkout and transaction', async () => {

@@ -3,6 +3,7 @@ import { AppointmentStatus, AvailabilityType, RoleType, TimeSlotStatus } from '@
 
 import { AuditService } from '../../../common/audit/audit.service';
 import { CountryService } from '../../../common/country/country.service';
+import { AnalyticsService } from '../../../common/observability/analytics.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AppointmentsService } from '../appointments.service';
 
@@ -11,6 +12,7 @@ describe('AppointmentsService', () => {
   let prisma: jest.Mocked<PrismaService>;
   let auditService: jest.Mocked<AuditService>;
   let countryService: jest.Mocked<CountryService>;
+  let analyticsService: jest.Mocked<AnalyticsService>;
 
   beforeEach(() => {
     prisma = {
@@ -35,7 +37,8 @@ describe('AppointmentsService', () => {
       momoProviders: null,
       supportedLocales: null,
     });
-    service = new AppointmentsService(prisma, auditService, countryService);
+    analyticsService = { track: jest.fn() } as unknown as jest.Mocked<AnalyticsService>;
+    service = new AppointmentsService(prisma, auditService, countryService, analyticsService);
   });
 
   it('books an appointment and reserves the slot', async () => {

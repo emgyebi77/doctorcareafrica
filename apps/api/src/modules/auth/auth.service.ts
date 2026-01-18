@@ -22,6 +22,7 @@ import { createHash, randomBytes } from 'crypto';
 
 import { AuditService } from '../../common/audit/audit.service';
 import { CountryService } from '../../common/country/country.service';
+import { AnalyticsService } from '../../common/observability/analytics.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AUTH_CONFIG } from './auth.constants';
 import { AuthTokens } from './auth.types';
@@ -67,6 +68,7 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly auditService: AuditService,
     private readonly countryService: CountryService,
+    private readonly analyticsService: AnalyticsService,
   ) {}
 
   async register(dto: RegisterDto, meta: AuthRequestMeta) {
@@ -152,6 +154,11 @@ export class AuthService {
       description: 'User self-registered.',
       meta,
     });
+    this.analyticsService.track(
+      'user_registered',
+      { role: user.role },
+      { userId: user.id, countryId: user.countryId, source: 'auth.register' },
+    );
     return {
       user: this.publicUser(user, profileIds),
       tokens,
@@ -286,6 +293,11 @@ export class AuthService {
       description: 'User OTP login.',
       meta,
     });
+    this.analyticsService.track(
+      'user_login',
+      { method: 'otp' },
+      { userId: user.id, countryId: user.countryId, source: 'auth.verifyOtp' },
+    );
 
     return {
       user: this.publicUser(user, profileIds),
@@ -339,6 +351,11 @@ export class AuthService {
       description: 'User password login.',
       meta,
     });
+    this.analyticsService.track(
+      'user_login',
+      { method: 'password' },
+      { userId: user.id, countryId: user.countryId, source: 'auth.login' },
+    );
     return {
       user: this.publicUser(user, profileIds),
       tokens,

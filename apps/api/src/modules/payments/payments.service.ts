@@ -23,6 +23,7 @@ import { createHmac, randomBytes } from 'crypto';
 
 import { AuditService } from '../../common/audit/audit.service';
 import { CountryService } from '../../common/country/country.service';
+import { AnalyticsService } from '../../common/observability/analytics.service';
 import { RequestUser } from '../../common/interfaces/request-user.interface';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateCheckoutDto } from './dto/create-checkout.dto';
@@ -42,6 +43,7 @@ export class PaymentsService {
     private readonly auditService: AuditService,
     private readonly configService: ConfigService,
     private readonly countryService: CountryService,
+    private readonly analyticsService: AnalyticsService,
   ) {}
 
   async createCheckout(user: RequestUser, dto: CreateCheckoutDto, meta: RequestMeta) {
@@ -144,6 +146,16 @@ export class PaymentsService {
       description: `Payment initiated via ${provider}.`,
       meta,
     });
+    this.analyticsService.track(
+      'payment_initiated',
+      {
+        provider,
+        amount: dto.amount,
+        currency: resolvedCurrency,
+        appointmentId: payment.appointmentId ?? null,
+      },
+      { userId: user.id, countryId: user.countryId, source: 'payments.checkout' },
+    );
 
     return {
       paymentId: payment.id,
