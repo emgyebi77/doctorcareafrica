@@ -9,6 +9,7 @@ import { TelemedicineModule } from './modules/telemedicine/telemedicine.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { MedicalRecordsModule } from './modules/medical-records/medical-records.module';
 import { AdminDashboardModule } from './modules/admin-dashboard/admin-dashboard.module';
+import { AiModule } from './modules/ai/ai.module';
 import { PatientOnboardingModule } from './modules/patient-onboarding/patient-onboarding.module';
 import { PrismaModule } from './prisma/prisma.module';
 
@@ -24,6 +25,7 @@ import { PrismaModule } from './prisma/prisma.module';
     PaymentsModule,
     MedicalRecordsModule,
     AdminDashboardModule,
+    AiModule,
     PatientOnboardingModule,
   ],
 })
