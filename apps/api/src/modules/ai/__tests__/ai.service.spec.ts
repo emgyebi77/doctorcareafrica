@@ -74,6 +74,21 @@ describe('AiService', () => {
     });
   });
 
+  it('returns notes assistant response', async () => {
+    prisma.aiLog.create.mockResolvedValue({ id: 'log-id' } as never);
+
+    await expect(
+      service.notesAssistant(
+        { id: 'user-id', role: RoleType.DOCTOR, doctorId: 'doctor-id', countryId: 'country-id' },
+        { notes: 'Patient reports dizziness, vitals stable.' },
+        {},
+      ),
+    ).resolves.toEqual({
+      response: 'Drafted clinical note (non-diagnostic): Subjective, Objective, Assessment, Plan.',
+      logId: 'log-id',
+    });
+  });
+
   it('blocks log access for non-admin', async () => {
     await expect(
       service.listLogs(

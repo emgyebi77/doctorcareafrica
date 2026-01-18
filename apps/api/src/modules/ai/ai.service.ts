@@ -15,6 +15,7 @@ import { AiSummaryDto } from './dto/ai-summary.dto';
 import { AiTranslateDto } from './dto/ai-translate.dto';
 import { AiSymptomGuidanceDto } from './dto/ai-symptom-guidance.dto';
 import { AiTriageDto } from './dto/ai-triage.dto';
+import { AiNotesAssistantDto } from './dto/ai-notes-assistant.dto';
 
 interface RequestMeta {
   ipAddress?: string;
@@ -43,6 +44,10 @@ export class AiService {
 
   async specialtyRouting(user: RequestUser, dto: AiSpecialtyRoutingDto, meta: RequestMeta) {
     return this.generate(user, 'specialtyRouting', AI_TEMPLATES.specialtyRouting(dto), meta);
+  }
+
+  async notesAssistant(user: RequestUser, dto: AiNotesAssistantDto, meta: RequestMeta) {
+    return this.generate(user, 'notesAssistant', AI_TEMPLATES.notesAssistant(dto), meta);
   }
 
   async followup(user: RequestUser, dto: AiFollowUpDto, meta: RequestMeta) {
@@ -130,6 +135,9 @@ export class AiService {
     }
     if (feature === 'specialtyRouting') {
       return 'Recommended specialty: General Medicine. This is not a diagnosis.';
+    }
+    if (feature === 'notesAssistant') {
+      return 'Drafted clinical note (non-diagnostic): Subjective, Objective, Assessment, Plan.';
     }
     return `AI ${feature} response placeholder.`;
   }

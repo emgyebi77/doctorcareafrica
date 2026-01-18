@@ -71,6 +71,23 @@ export const AI_TEMPLATES = {
     ]
       .filter(Boolean)
       .join('\n'),
+  notesAssistant: (payload: {
+    notes: string;
+    visitType?: string;
+    language?: string;
+    encounterContext?: string;
+  }) =>
+    [
+      'You are a clinical notes assistant for doctors.',
+      'Draft structured clinical notes from the provided input.',
+      'Do not diagnose beyond the input; keep it factual and non-diagnostic.',
+      `Notes: ${payload.notes}`,
+      payload.visitType ? `Visit type: ${payload.visitType}` : undefined,
+      payload.language ? `Language: ${payload.language}` : undefined,
+      payload.encounterContext ? `Context: ${payload.encounterContext}` : undefined,
+    ]
+      .filter(Boolean)
+      .join('\n'),
 } as const;
 
 export type AiFeature = keyof typeof AI_TEMPLATES;

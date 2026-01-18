@@ -13,6 +13,7 @@ describe('AI (e2e)', () => {
     triage: jest.fn(),
     symptomGuidance: jest.fn(),
     specialtyRouting: jest.fn(),
+    notesAssistant: jest.fn(),
   };
 
   beforeAll(async () => {
@@ -63,6 +64,15 @@ describe('AI (e2e)', () => {
     await request(app.getHttpServer())
       .post('/api/v1/ai/specialty-routing')
       .send({ symptoms: 'Chest pain', age: 45 })
+      .expect(200);
+  });
+
+  it('POST /ai/notes-assistant returns response', async () => {
+    aiService.notesAssistant.mockResolvedValue({ response: 'ok', logId: 'log-id' });
+
+    await request(app.getHttpServer())
+      .post('/api/v1/ai/notes-assistant')
+      .send({ notes: 'Patient reports dizziness' })
       .expect(200);
   });
 });
