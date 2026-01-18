@@ -1,0 +1,60 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      run_migrations:
+        description: "Run Prisma migrations on Railway"
+        required: false
+        default: "false"
+      deploy_environment:
+        description: "Target environment name"
+        required: false
+        default: "production"
+
+jobs:
+  deploy-web:
+    runs-on: ubuntu-latest
+    if: ${{ secrets.VERCEL_TOKEN != '' && secrets.VERCEL_ORG_ID != '' && secrets.VERCEL_PROJECT_ID != '' }}
+    environment: ${{ github.event.inputs.deploy_environment || 'production' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: ./apps/web
+          vercel-args: ${{ github.ref == 'refs/heads/main' && '--prod' || '' }}
+
+  deploy-api:
+    runs-on: ubuntu-latest
+    if: ${{ secrets.RAILWAY_TOKEN != '' && secrets.RAILWAY_PROJECT_ID != '' }}
+    environment: ${{ github.event.inputs.deploy_environment || 'production' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Link Railway project
+        run: railway link ${{ secrets.RAILWAY_PROJECT_ID }}
+
+      - name: Run migrations (optional)
+        if: ${{ github.event.inputs.run_migrations == 'true' }}
+        run: railway run npx prisma migrate deploy
+
+      - name: Deploy API
+        run: railway up

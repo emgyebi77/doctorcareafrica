@@ -195,3 +195,9 @@ Operational
 - Metrics and alerting (Sentry, OpenTelemetry)
 - Backups for PostgreSQL with retention policies
 - Structured logs, metrics, and tracing are defined in `docs/observability.md`.
+
+## 8) CI/CD and migrations
+
+- GitHub Actions workflows live in `.github/workflows`.
+- Safe Prisma migrations are applied via `prisma migrate deploy` after staging validation.
+- Deployment runbooks and secrets are documented in `docs/ci-cd.md`.

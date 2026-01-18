@@ -13,3 +13,4 @@ Medical records documentation is in `docs/medical-records.md`.
 Admin dashboard documentation is in `docs/admin-dashboard.md`.
 AI module documentation is in `docs/ai-module.md`.
 Observability documentation is in `docs/observability.md`.
+CI/CD documentation is in `docs/ci-cd.md`.
