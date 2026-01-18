@@ -5,6 +5,7 @@ import { OtpChannel, RoleType, UserStatus } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 
 import { PrismaService } from '../../../prisma/prisma.service';
+import { AuditService } from '../../../common/audit/audit.service';
 import { AuthService } from '../auth.service';
 
 jest.mock('bcryptjs', () => ({
@@ -17,10 +18,11 @@ describe('AuthService', () => {
   let prisma: jest.Mocked<PrismaService>;
   let jwtService: jest.Mocked<JwtService>;
   let configService: jest.Mocked<ConfigService>;
+  let auditService: jest.Mocked<AuditService>;
 
   beforeEach(() => {
     prisma = {
-      user: { findFirst: jest.fn() },
+      user: { findFirst: jest.fn(), update: jest.fn() },
       refreshToken: {
         findUnique: jest.fn(),
         findFirst: jest.fn(),
@@ -44,7 +46,8 @@ describe('AuthService', () => {
     } as unknown as jest.Mocked<PrismaService>;
     jwtService = { signAsync: jest.fn() } as unknown as jest.Mocked<JwtService>;
     configService = { get: jest.fn() } as unknown as jest.Mocked<ConfigService>;
-    service = new AuthService(prisma, jwtService, configService);
+    auditService = { logAction: jest.fn() } as unknown as jest.Mocked<AuditService>;
+    service = new AuthService(prisma, jwtService, configService, auditService);
     configService.get.mockImplementation((_key: string, defaultValue?: string | number) => defaultValue);
   });
 

@@ -20,6 +20,7 @@ import {
 import * as bcrypt from 'bcryptjs';
 import { createHash, randomBytes } from 'crypto';
 
+import { AuditService } from '../../common/audit/audit.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AUTH_CONFIG } from './auth.constants';
 import { AuthTokens } from './auth.types';
@@ -63,6 +64,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly auditService: AuditService,
   ) {}
 
   async register(dto: RegisterDto, meta: AuthRequestMeta) {
@@ -132,7 +134,7 @@ export class AuthService {
     const session = await this.createSession(user, meta);
     const tokens = await this.issueTokens(user, profileIds, meta, session.id);
     this.logger.log(`User registered: ${user.id}`);
-    await this.logAudit({
+    await this.auditService.logAction({
       action: AuditAction.CREATE,
       actorUserId: user.id,
       countryId: user.countryId,
@@ -180,7 +182,7 @@ export class AuthService {
     });
 
     this.logger.log(`OTP requested for user: ${user.id}`);
-    await this.logAudit({
+    await this.auditService.logAction({
       action: AuditAction.CREATE,
       actorUserId: user.id,
       countryId: user.countryId,
@@ -249,12 +251,24 @@ export class AuthService {
       data: { consumedAt: new Date() },
     });
 
+    const now = new Date();
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        lastLoginAt: now,
+        phoneVerifiedAt:
+          dto.channel === OtpChannel.SMS ? user.phoneVerifiedAt ?? now : undefined,
+        emailVerifiedAt:
+          dto.channel === OtpChannel.EMAIL ? user.emailVerifiedAt ?? now : undefined,
+      },
+    });
+
     const profileIds = this.getProfileIds(user);
     const session = await this.createSession(user, meta);
     const tokens = await this.issueTokens(user, profileIds, meta, session.id);
 
     this.logger.log(`OTP login: ${user.id}`);
-    await this.logAudit({
+    await this.auditService.logAction({
       action: AuditAction.LOGIN,
       actorUserId: user.id,
       countryId: user.countryId,
@@ -298,11 +312,16 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials.');
     }
 
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { lastLoginAt: new Date() },
+    });
+
     const profileIds = this.getProfileIds(user);
     const session = await this.createSession(user, meta);
     const tokens = await this.issueTokens(user, profileIds, meta, session.id);
     this.logger.log(`User login: ${user.id}`);
-    await this.logAudit({
+    await this.auditService.logAction({
       action: AuditAction.LOGIN,
       actorUserId: user.id,
       countryId: user.countryId,
@@ -357,7 +376,7 @@ export class AuthService {
     const accessToken = await this.createAccessToken(existing.user, profileIds);
 
     this.logger.log(`Refresh token rotated: ${existing.userId}`);
-    await this.logAudit({
+    await this.auditService.logAction({
       action: AuditAction.UPDATE,
       actorUserId: existing.userId,
       countryId: existing.user.countryId,
@@ -406,7 +425,7 @@ export class AuthService {
     }
 
     this.logger.log(`User logout: ${user.id}`);
-    await this.logAudit({
+    await this.auditService.logAction({
       action: AuditAction.LOGOUT,
       actorUserId: user.id,
       entityType: 'User',
@@ -554,7 +573,7 @@ export class AuthService {
         data: { revokedAt: now, ipAddress: meta.ipAddress, userAgent: meta.userAgent },
       });
     });
-    await this.logAudit({
+    await this.auditService.logAction({
       action: AuditAction.LOGOUT,
       actorUserId: userId,
       entityType: 'AuthSession',
@@ -650,32 +669,4 @@ export class AuthService {
     return Number(this.configService.get('OTP_LENGTH', AUTH_CONFIG.otpLength));
   }
 
-  private async logAudit(params: {
-    action: AuditAction;
-    actorUserId?: string;
-    countryId?: string;
-    entityType: string;
-    entityId: string;
-    description?: string;
-    meta?: AuthRequestMeta;
-    metadata?: Record<string, unknown>;
-  }) {
-    try {
-      await this.prisma.auditLog.create({
-        data: {
-          action: params.action,
-          actorUserId: params.actorUserId,
-          countryId: params.countryId,
-          entityType: params.entityType,
-          entityId: params.entityId,
-          description: params.description,
-          ipAddress: params.meta?.ipAddress,
-          userAgent: params.meta?.userAgent,
-          metadata: params.metadata,
-        },
-      });
-    } catch (error) {
-      this.logger.warn(`Audit log failed: ${error instanceof Error ? error.message : 'unknown'}`);
-    }
-  }
 }
