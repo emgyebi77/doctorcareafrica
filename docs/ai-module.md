@@ -18,6 +18,7 @@ Location: `apps/api/src/modules/ai`
 - `ai-specialty-routing.dto.ts`
 - `ai-notes-assistant.dto.ts`
 - `ai-safety-check.dto.ts`
+- `ai-patient-chat.dto.ts`
 
 ## API routes
 
@@ -28,6 +29,7 @@ Base path: `/api/v1/ai`
 - `POST /specialty-routing`
 - `POST /notes-assistant`
 - `POST /safety-check`
+- `POST /patient-chat`
 - `POST /followup`
 - `POST /education`
 - `POST /translate`
@@ -73,6 +75,13 @@ Safety check
 - POST `/api/v1/ai/safety-check`
 - Body:
   - `content`: `Provide general guidance for headaches.`
+
+Patient chat
+- POST `/api/v1/ai/patient-chat`
+- Body:
+  - `message`: `I have a mild cough.`
+  - `language`: `en`
+  - `context`: `No fever`
 
 Follow-up
 - POST `/api/v1/ai/followup`
