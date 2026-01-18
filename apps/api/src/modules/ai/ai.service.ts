@@ -18,6 +18,7 @@ import { AiTriageDto } from './dto/ai-triage.dto';
 import { AiNotesAssistantDto } from './dto/ai-notes-assistant.dto';
 import { AiSafetyCheckDto } from './dto/ai-safety-check.dto';
 import { AiPatientChatDto } from './dto/ai-patient-chat.dto';
+import { AiRiskScoreDto } from './dto/ai-risk-score.dto';
 
 interface RequestMeta {
   ipAddress?: string;
@@ -54,6 +55,13 @@ export class AiService {
 
   async patientChat(user: RequestUser, dto: AiPatientChatDto, meta: RequestMeta) {
     return this.generate(user, 'patientChat', AI_TEMPLATES.patientChat(dto), meta);
+  }
+
+  async riskScore(user: RequestUser, dto: AiRiskScoreDto, meta: RequestMeta) {
+    if (user.role !== RoleType.ADMIN && user.role !== RoleType.SUPER_ADMIN) {
+      throw new ForbiddenException('Admin access required.');
+    }
+    return this.generate(user, 'riskScoring', AI_TEMPLATES.riskScoring(dto), meta);
   }
 
   async followup(user: RequestUser, dto: AiFollowUpDto, meta: RequestMeta) {
@@ -184,6 +192,9 @@ export class AiService {
     }
     if (feature === 'patientChat') {
       return 'I can provide general guidance, but I cannot diagnose or prescribe. If symptoms worsen, seek care.';
+    }
+    if (feature === 'riskScoring') {
+      return 'Risk score: 55. Rationale: Moderate risk based on factors provided.';
     }
     return `AI ${feature} response placeholder.`;
   }

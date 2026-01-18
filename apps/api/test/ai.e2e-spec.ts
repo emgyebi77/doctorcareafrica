@@ -15,6 +15,7 @@ describe('AI (e2e)', () => {
     specialtyRouting: jest.fn(),
     notesAssistant: jest.fn(),
     safetyCheck: jest.fn(),
+    riskScore: jest.fn(),
   };
 
   beforeAll(async () => {
@@ -83,6 +84,15 @@ describe('AI (e2e)', () => {
     await request(app.getHttpServer())
       .post('/api/v1/ai/safety-check')
       .send({ content: 'General health guidance.' })
+      .expect(200);
+  });
+
+  it('POST /ai/risk-score returns response', async () => {
+    aiService.riskScore.mockResolvedValue({ response: 'ok', logId: 'log-id' });
+
+    await request(app.getHttpServer())
+      .post('/api/v1/ai/risk-score')
+      .send({ subject: 'Patient A', factors: ['missed appointments'] })
       .expect(200);
   });
 });

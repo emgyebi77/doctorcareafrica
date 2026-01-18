@@ -125,4 +125,19 @@ describe('AiService', () => {
       logId: 'log-id',
     });
   });
+
+  it('returns risk score for admin', async () => {
+    prisma.aiLog.create.mockResolvedValue({ id: 'log-id' } as never);
+
+    await expect(
+      service.riskScore(
+        { id: 'admin-id', role: RoleType.ADMIN, countryId: 'country-id' },
+        { subject: 'Patient A', factors: ['missed appointments', 'unpaid balance'] },
+        {},
+      ),
+    ).resolves.toEqual({
+      response: 'Risk score: 55. Rationale: Moderate risk based on factors provided.',
+      logId: 'log-id',
+    });
+  });
 });

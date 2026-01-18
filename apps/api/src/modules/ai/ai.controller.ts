@@ -30,6 +30,7 @@ import { AiTriageDto } from './dto/ai-triage.dto';
 import { AiNotesAssistantDto } from './dto/ai-notes-assistant.dto';
 import { AiSafetyCheckDto } from './dto/ai-safety-check.dto';
 import { AiPatientChatDto } from './dto/ai-patient-chat.dto';
+import { AiRiskScoreDto } from './dto/ai-risk-score.dto';
 
 @Controller('ai')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -121,6 +122,21 @@ export class AiController {
     @Ip() ip: string,
   ) {
     return this.aiService.patientChat(user, dto, {
+      ipAddress: ip,
+      userAgent: req.get('user-agent') ?? undefined,
+    });
+  }
+
+  @Post('risk-score')
+  @Roles(RoleType.ADMIN, RoleType.SUPER_ADMIN)
+  @HttpCode(HttpStatus.OK)
+  async riskScore(
+    @CurrentUser() user: RequestUser,
+    @Body() dto: AiRiskScoreDto,
+    @Req() req: Request,
+    @Ip() ip: string,
+  ) {
+    return this.aiService.riskScore(user, dto, {
       ipAddress: ip,
       userAgent: req.get('user-agent') ?? undefined,
     });

@@ -98,6 +98,23 @@ export const AI_TEMPLATES = {
     ]
       .filter(Boolean)
       .join('\n'),
+  riskScoring: (payload: {
+    subject: string;
+    factors?: string[];
+    history?: string;
+    notes?: string;
+  }) =>
+    [
+      'You are a risk scoring assistant for admin review.',
+      'Return a numeric risk score (0-100) and a short rationale.',
+      'Do not diagnose or prescribe. Flag urgent review if high risk.',
+      `Subject: ${payload.subject}`,
+      payload.factors?.length ? `Factors: ${payload.factors.join(', ')}` : undefined,
+      payload.history ? `History: ${payload.history}` : undefined,
+      payload.notes ? `Notes: ${payload.notes}` : undefined,
+    ]
+      .filter(Boolean)
+      .join('\n'),
 } as const;
 
 export type AiFeature = keyof typeof AI_TEMPLATES;
