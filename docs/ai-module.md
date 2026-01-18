@@ -17,6 +17,7 @@ Location: `apps/api/src/modules/ai`
   - `ai-log-query.dto.ts`
 - `ai-specialty-routing.dto.ts`
 - `ai-notes-assistant.dto.ts`
+- `ai-safety-check.dto.ts`
 
 ## API routes
 
@@ -26,6 +27,7 @@ Base path: `/api/v1/ai`
 - `POST /summary`
 - `POST /specialty-routing`
 - `POST /notes-assistant`
+- `POST /safety-check`
 - `POST /followup`
 - `POST /education`
 - `POST /translate`
@@ -67,6 +69,11 @@ Notes assistant
   - `visitType`: `Follow-up`
   - `language`: `en`
 
+Safety check
+- POST `/api/v1/ai/safety-check`
+- Body:
+  - `content`: `Provide general guidance for headaches.`
+
 Follow-up
 - POST `/api/v1/ai/followup`
 - Body:
@@ -89,6 +96,7 @@ Translate
 - Input length capped and blocked terms are rejected.
 - All requests are logged to `AiLog` for auditability.
 - Symptom guidance is explicitly non-diagnostic.
+- Safety checker blocks prescribing requests.
 
 ## Tests
 
