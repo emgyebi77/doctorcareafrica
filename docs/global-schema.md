@@ -26,6 +26,8 @@ Financials
 - `Wallet` is 1:1 with `User`.
 - `Payment` can reference an `Appointment` and optional `Wallet`.
 - `Transaction` belongs to a `Wallet` and optionally references a `Payment`.
+- `PaymentRefund` tracks refund attempts and outcomes.
+- `WebhookEvent` stores payment provider webhook payloads.
 
 Operational logging
 - `Notification` targets a `User`.

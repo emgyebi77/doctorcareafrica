@@ -152,6 +152,24 @@ enum KycDocumentStatus {
   REJECTED
 }
 
+enum RefundStatus {
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+}
+
+enum WebhookProvider {
+  STRIPE
+  MOMO
+}
+
+enum WebhookStatus {
+  RECEIVED
+  PROCESSED
+  FAILED
+}
+
 enum AuditAction {
   CREATE
   UPDATE
@@ -592,11 +610,59 @@ model Payment {
   wallet      Wallet?      @relation(fields: [walletId], references: [id])
   country     Country      @relation(fields: [countryId], references: [id])
   transactions Transaction[]
+  refunds      PaymentRefund[]
 
   @@index([patientId])
   @@index([doctorId])
   @@index([status])
   @@index([countryId])
+}
+
+model PaymentRefund {
+  id               String       @id @default(uuid())
+  paymentId        String
+  countryId        String
+  amount           Decimal      @db.Decimal(12, 2)
+  currency         String
+  status           RefundStatus @default(PENDING)
+  reason           String?
+  providerReference String?
+  processedAt      DateTime?
+  metadata         Json?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  deletedAt        DateTime?
+
+  payment Payment @relation(fields: [paymentId], references: [id])
+  country Country @relation(fields: [countryId], references: [id])
+
+  @@index([paymentId])
+  @@index([countryId])
+  @@index([status])
+}
+
+model WebhookEvent {
+  id          String         @id @default(uuid())
+  provider    WebhookProvider
+  eventType   String
+  externalId  String
+  paymentId   String?
+  countryId   String?
+  signature   String?
+  payload     Json
+  status      WebhookStatus  @default(RECEIVED)
+  errorMessage String?
+  receivedAt  DateTime       @default(now())
+  processedAt DateTime?
+
+  payment Payment? @relation(fields: [paymentId], references: [id])
+  country Country? @relation(fields: [countryId], references: [id])
+
+  @@unique([provider, externalId])
+  @@index([paymentId])
+  @@index([countryId])
+  @@index([status])
+  @@index([receivedAt])
 }
 
 model Transaction {
