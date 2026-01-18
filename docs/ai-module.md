@@ -19,6 +19,7 @@ Location: `apps/api/src/modules/ai`
 - `ai-notes-assistant.dto.ts`
 - `ai-safety-check.dto.ts`
 - `ai-patient-chat.dto.ts`
+- `ai-risk-score.dto.ts`
 
 ## API routes
 
@@ -30,6 +31,7 @@ Base path: `/api/v1/ai`
 - `POST /notes-assistant`
 - `POST /safety-check`
 - `POST /patient-chat`
+- `POST /risk-score`
 - `POST /followup`
 - `POST /education`
 - `POST /translate`
@@ -83,6 +85,12 @@ Patient chat
   - `language`: `en`
   - `context`: `No fever`
 
+Risk score
+- POST `/api/v1/ai/risk-score`
+- Body:
+  - `subject`: `Patient A`
+  - `factors`: `["missed appointments", "unpaid balance"]`
+
 Follow-up
 - POST `/api/v1/ai/followup`
 - Body:
@@ -106,6 +114,7 @@ Translate
 - All requests are logged to `AiLog` for auditability.
 - Symptom guidance is explicitly non-diagnostic.
 - Safety checker blocks prescribing requests.
+- Risk scoring is restricted to admins for review workflows.
 
 ## Tests
 
