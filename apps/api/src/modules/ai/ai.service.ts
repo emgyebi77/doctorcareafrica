@@ -10,6 +10,7 @@ import { validateSafety } from './ai.safety';
 import { AiEducationDto } from './dto/ai-education.dto';
 import { AiFollowUpDto } from './dto/ai-followup.dto';
 import { AiLogQueryDto } from './dto/ai-log-query.dto';
+import { AiSpecialtyRoutingDto } from './dto/ai-specialty-routing.dto';
 import { AiSummaryDto } from './dto/ai-summary.dto';
 import { AiTranslateDto } from './dto/ai-translate.dto';
 import { AiSymptomGuidanceDto } from './dto/ai-symptom-guidance.dto';
@@ -38,6 +39,10 @@ export class AiService {
 
   async summary(user: RequestUser, dto: AiSummaryDto, meta: RequestMeta) {
     return this.generate(user, 'summary', AI_TEMPLATES.summary(dto), meta);
+  }
+
+  async specialtyRouting(user: RequestUser, dto: AiSpecialtyRoutingDto, meta: RequestMeta) {
+    return this.generate(user, 'specialtyRouting', AI_TEMPLATES.specialtyRouting(dto), meta);
   }
 
   async followup(user: RequestUser, dto: AiFollowUpDto, meta: RequestMeta) {
@@ -122,6 +127,9 @@ export class AiService {
   private mockResponse(feature: AiFeature) {
     if (feature === 'symptomGuidance') {
       return 'This is general guidance and not a diagnosis. Seek urgent care if symptoms worsen.';
+    }
+    if (feature === 'specialtyRouting') {
+      return 'Recommended specialty: General Medicine. This is not a diagnosis.';
     }
     return `AI ${feature} response placeholder.`;
   }

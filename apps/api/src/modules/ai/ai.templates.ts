@@ -54,6 +54,23 @@ export const AI_TEMPLATES = {
       `Target language: ${payload.targetLanguage}`,
       `Text: ${payload.text}`,
     ].join('\n'),
+  specialtyRouting: (payload: {
+    symptoms: string;
+    age?: number;
+    context?: string;
+    preferredLanguage?: string;
+  }) =>
+    [
+      'You are a specialty routing assistant.',
+      'Recommend the most appropriate medical specialty for the symptoms.',
+      'Do not diagnose. Provide a brief rationale and urgency flag.',
+      `Symptoms: ${payload.symptoms}`,
+      payload.age ? `Age: ${payload.age}` : undefined,
+      payload.context ? `Context: ${payload.context}` : undefined,
+      payload.preferredLanguage ? `Language: ${payload.preferredLanguage}` : undefined,
+    ]
+      .filter(Boolean)
+      .join('\n'),
 } as const;
 
 export type AiFeature = keyof typeof AI_TEMPLATES;

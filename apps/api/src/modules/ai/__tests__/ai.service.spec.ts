@@ -59,6 +59,21 @@ describe('AiService', () => {
     });
   });
 
+  it('returns specialty routing guidance', async () => {
+    prisma.aiLog.create.mockResolvedValue({ id: 'log-id' } as never);
+
+    await expect(
+      service.specialtyRouting(
+        { id: 'user-id', role: RoleType.PATIENT, patientId: 'patient-id', countryId: 'country-id' },
+        { symptoms: 'Chest pain with exertion', age: 45 },
+        {},
+      ),
+    ).resolves.toEqual({
+      response: 'Recommended specialty: General Medicine. This is not a diagnosis.',
+      logId: 'log-id',
+    });
+  });
+
   it('blocks log access for non-admin', async () => {
     await expect(
       service.listLogs(

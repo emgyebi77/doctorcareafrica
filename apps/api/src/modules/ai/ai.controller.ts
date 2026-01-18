@@ -22,6 +22,7 @@ import { AiService } from './ai.service';
 import { AiEducationDto } from './dto/ai-education.dto';
 import { AiFollowUpDto } from './dto/ai-followup.dto';
 import { AiLogQueryDto } from './dto/ai-log-query.dto';
+import { AiSpecialtyRoutingDto } from './dto/ai-specialty-routing.dto';
 import { AiSummaryDto } from './dto/ai-summary.dto';
 import { AiTranslateDto } from './dto/ai-translate.dto';
 import { AiSymptomGuidanceDto } from './dto/ai-symptom-guidance.dto';
@@ -72,6 +73,21 @@ export class AiController {
     @Ip() ip: string,
   ) {
     return this.aiService.summary(user, dto, {
+      ipAddress: ip,
+      userAgent: req.get('user-agent') ?? undefined,
+    });
+  }
+
+  @Post('specialty-routing')
+  @Roles(RoleType.PATIENT, RoleType.DOCTOR, RoleType.ADMIN, RoleType.SUPER_ADMIN)
+  @HttpCode(HttpStatus.OK)
+  async specialtyRouting(
+    @CurrentUser() user: RequestUser,
+    @Body() dto: AiSpecialtyRoutingDto,
+    @Req() req: Request,
+    @Ip() ip: string,
+  ) {
+    return this.aiService.specialtyRouting(user, dto, {
       ipAddress: ip,
       userAgent: req.get('user-agent') ?? undefined,
     });
