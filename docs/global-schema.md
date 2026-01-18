@@ -32,6 +32,7 @@ Operational logging
 - `AuditLog` records actor actions against any entity.
 - `AiLog` stores AI interactions and can link to `User`, `Patient`, `Doctor`,
   and/or `Encounter`.
+- `RefreshToken` stores hashed refresh tokens for session rotation.
 
 ## Migration command
 

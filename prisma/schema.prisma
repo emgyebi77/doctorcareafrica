@@ -223,9 +223,35 @@ model User {
   videoTokens   VideoToken[]
   attachments   Attachment[]
   aiLogs        AiLog[]
+  refreshTokens RefreshToken[]
 
   @@index([countryId])
   @@index([status])
+}
+
+model RefreshToken {
+  id           String   @id @default(uuid())
+  userId       String
+  countryId    String
+  tokenHash    String   @unique
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  replacedById String?
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user       User          @relation(fields: [userId], references: [id])
+  country    Country       @relation(fields: [countryId], references: [id])
+  replacedBy RefreshToken? @relation("RefreshTokenRotation", fields: [replacedById], references: [id])
+  replaces   RefreshToken[] @relation("RefreshTokenRotation")
+
+  @@index([userId])
+  @@index([countryId])
+  @@index([expiresAt])
+  @@index([revokedAt])
+  @@index([replacedById])
 }
 
 model Patient {
