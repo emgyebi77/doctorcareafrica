@@ -5,6 +5,7 @@ import { AuditModule } from './common/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { DoctorOnboardingModule } from './modules/doctor-onboarding/doctor-onboarding.module';
 import { AppointmentsModule } from './modules/appointments/appointments.module';
+import { TelemedicineModule } from './modules/telemedicine/telemedicine.module';
 import { PatientOnboardingModule } from './modules/patient-onboarding/patient-onboarding.module';
 import { PrismaModule } from './prisma/prisma.module';
 
@@ -16,6 +17,7 @@ import { PrismaModule } from './prisma/prisma.module';
     AuthModule,
     DoctorOnboardingModule,
     AppointmentsModule,
+    TelemedicineModule,
     PatientOnboardingModule,
   ],
 })
