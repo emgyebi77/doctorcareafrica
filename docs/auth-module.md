@@ -27,7 +27,11 @@ Base path: `/api/v1/auth`
 - `POST /register` (create patient or doctor account)
 - `POST /login` (issue access + refresh tokens)
 - `POST /refresh` (rotate refresh token and issue new access token)
+- `POST /otp/request` (send OTP via SMS/email)
+- `POST /otp/verify` (verify OTP and issue tokens)
 - `POST /logout` (revoke one or all refresh tokens)
+- `GET /sessions` (list active sessions)
+- `POST /sessions/:id/revoke` (revoke a session)
 
 ## Example payloads
 
@@ -62,6 +66,19 @@ Refresh
 - Body:
   - `refreshToken`: `<refresh-token>`
 
+OTP request
+- POST `/api/v1/auth/otp/request`
+- Body:
+  - `identifier`: `patient@example.com`
+  - `channel`: `EMAIL`
+
+OTP verify
+- POST `/api/v1/auth/otp/verify`
+- Body:
+  - `identifier`: `patient@example.com`
+  - `channel`: `EMAIL`
+  - `code`: `123456`
+
 Logout (single token)
 - POST `/api/v1/auth/logout`
 - Authorization: `Bearer <access-token>`
@@ -72,6 +89,14 @@ Logout (all tokens)
 - POST `/api/v1/auth/logout`
 - Authorization: `Bearer <access-token>`
 - Body: `{}` (or omit body)
+
+List sessions
+- GET `/api/v1/auth/sessions`
+- Authorization: `Bearer <access-token>`
+
+Revoke session
+- POST `/api/v1/auth/sessions/<session-id>/revoke`
+- Authorization: `Bearer <access-token>`
 
 ## Tests
 
@@ -88,3 +113,6 @@ Integration tests:
 - Access tokens are short-lived; refresh tokens are longer-lived.
 - JWT payloads include `role` and `countryId` for authorization checks.
 - Login rejects non-active users and mismatched country scope.
+- OTPs are hashed at rest, expire after a short TTL, and enforce max attempts.
+- Audit logs record auth events for monitoring and compliance.
+- Sessions can be revoked independently to support account security.

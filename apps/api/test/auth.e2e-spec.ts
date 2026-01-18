@@ -9,6 +9,7 @@ describe('AuthModule (e2e)', () => {
   let app: INestApplication;
   const authService = {
     login: jest.fn(),
+    requestOtp: jest.fn(),
   };
 
   beforeAll(async () => {
@@ -48,6 +49,15 @@ describe('AuthModule (e2e)', () => {
     await request(app.getHttpServer())
       .post('/api/v1/auth/login')
       .send({ identifier: 'patient@example.com', password: 'Password123!' })
+      .expect(200);
+  });
+
+  it('POST /auth/otp/request returns success', async () => {
+    authService.requestOtp.mockResolvedValue({ success: true });
+
+    await request(app.getHttpServer())
+      .post('/api/v1/auth/otp/request')
+      .send({ identifier: 'patient@example.com', channel: 'EMAIL' })
       .expect(200);
   });
 });
