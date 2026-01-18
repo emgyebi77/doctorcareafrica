@@ -16,6 +16,7 @@ Location: `apps/api/src/modules/ai`
   - `ai-translate.dto.ts`
   - `ai-log-query.dto.ts`
 - `ai-specialty-routing.dto.ts`
+- `ai-notes-assistant.dto.ts`
 
 ## API routes
 
@@ -24,6 +25,7 @@ Base path: `/api/v1/ai`
 - `POST /symptom-guidance`
 - `POST /summary`
 - `POST /specialty-routing`
+- `POST /notes-assistant`
 - `POST /followup`
 - `POST /education`
 - `POST /translate`
@@ -57,6 +59,13 @@ Specialty routing
   - `symptoms`: `Chest pain`
   - `age`: `45`
   - `context`: `Symptoms with exertion`
+
+Notes assistant
+- POST `/api/v1/ai/notes-assistant`
+- Body:
+  - `notes`: `Patient reports dizziness, vitals stable.`
+  - `visitType`: `Follow-up`
+  - `language`: `en`
 
 Follow-up
 - POST `/api/v1/ai/followup`
