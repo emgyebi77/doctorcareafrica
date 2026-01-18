@@ -28,6 +28,7 @@ import { AiTranslateDto } from './dto/ai-translate.dto';
 import { AiSymptomGuidanceDto } from './dto/ai-symptom-guidance.dto';
 import { AiTriageDto } from './dto/ai-triage.dto';
 import { AiNotesAssistantDto } from './dto/ai-notes-assistant.dto';
+import { AiSafetyCheckDto } from './dto/ai-safety-check.dto';
 
 @Controller('ai')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -104,6 +105,21 @@ export class AiController {
     @Ip() ip: string,
   ) {
     return this.aiService.notesAssistant(user, dto, {
+      ipAddress: ip,
+      userAgent: req.get('user-agent') ?? undefined,
+    });
+  }
+
+  @Post('safety-check')
+  @Roles(RoleType.PATIENT, RoleType.DOCTOR, RoleType.ADMIN, RoleType.SUPER_ADMIN)
+  @HttpCode(HttpStatus.OK)
+  async safetyCheck(
+    @CurrentUser() user: RequestUser,
+    @Body() dto: AiSafetyCheckDto,
+    @Req() req: Request,
+    @Ip() ip: string,
+  ) {
+    return this.aiService.safetyCheck(user, dto, {
       ipAddress: ip,
       userAgent: req.get('user-agent') ?? undefined,
     });

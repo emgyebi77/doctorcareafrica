@@ -16,6 +16,7 @@ import { AiTranslateDto } from './dto/ai-translate.dto';
 import { AiSymptomGuidanceDto } from './dto/ai-symptom-guidance.dto';
 import { AiTriageDto } from './dto/ai-triage.dto';
 import { AiNotesAssistantDto } from './dto/ai-notes-assistant.dto';
+import { AiSafetyCheckDto } from './dto/ai-safety-check.dto';
 
 interface RequestMeta {
   ipAddress?: string;
@@ -78,6 +79,43 @@ export class AiService {
       orderBy: { createdAt: 'desc' },
     });
     return { logs };
+  }
+
+  async safetyCheck(user: RequestUser, dto: AiSafetyCheckDto, meta: RequestMeta) {
+    const safety = validateSafety(dto.content);
+    const model = this.configService.get<string>('AI_MODEL', 'safety-checker');
+    const provider = this.configService.get<string>('AI_PROVIDER', 'safety-checker');
+    const response = safety.allowed ? 'allowed' : `blocked: ${safety.reason ?? 'policy'}`;
+    const log = await this.prisma.aiLog.create({
+      data: {
+        userId: user.id,
+        patientId: user.patientId ?? undefined,
+        doctorId: user.doctorId ?? undefined,
+        countryId: user.countryId,
+        model,
+        prompt: dto.content,
+        response,
+        inputTokens: this.countTokens(dto.content),
+        outputTokens: this.countTokens(response),
+        metadata: {
+          feature: 'safetyCheck',
+          provider,
+          safety: safety.reason ?? null,
+        },
+      },
+    });
+
+    await this.auditService.logAction({
+      action: AuditAction.CREATE,
+      actorUserId: user.id,
+      countryId: user.countryId,
+      entityType: 'AiLog',
+      entityId: log.id,
+      description: 'AI safety check performed.',
+      meta,
+    });
+
+    return { allowed: safety.allowed, reason: safety.reason ?? null };
   }
 
   private async generate(

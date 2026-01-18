@@ -14,6 +14,7 @@ describe('AI (e2e)', () => {
     symptomGuidance: jest.fn(),
     specialtyRouting: jest.fn(),
     notesAssistant: jest.fn(),
+    safetyCheck: jest.fn(),
   };
 
   beforeAll(async () => {
@@ -73,6 +74,15 @@ describe('AI (e2e)', () => {
     await request(app.getHttpServer())
       .post('/api/v1/ai/notes-assistant')
       .send({ notes: 'Patient reports dizziness' })
+      .expect(200);
+  });
+
+  it('POST /ai/safety-check returns response', async () => {
+    aiService.safetyCheck.mockResolvedValue({ allowed: true });
+
+    await request(app.getHttpServer())
+      .post('/api/v1/ai/safety-check')
+      .send({ content: 'General health guidance.' })
       .expect(200);
   });
 });

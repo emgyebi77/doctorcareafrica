@@ -97,4 +97,16 @@ describe('AiService', () => {
       ),
     ).rejects.toBeInstanceOf(ForbiddenException);
   });
+
+  it('flags prescribing requests in safety check', async () => {
+    prisma.aiLog.create.mockResolvedValue({ id: 'log-id' } as never);
+
+    await expect(
+      service.safetyCheck(
+        { id: 'user-id', role: RoleType.DOCTOR, doctorId: 'doctor-id', countryId: 'country-id' },
+        { content: 'Please prescribe antibiotics for sore throat.' },
+        {},
+      ),
+    ).resolves.toEqual({ allowed: false, reason: 'Prescribing requests are not allowed.' });
+  });
 });
