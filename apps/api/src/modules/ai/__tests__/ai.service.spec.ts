@@ -109,4 +109,20 @@ describe('AiService', () => {
       ),
     ).resolves.toEqual({ allowed: false, reason: 'Prescribing requests are not allowed.' });
   });
+
+  it('returns patient chat guidance', async () => {
+    prisma.aiLog.create.mockResolvedValue({ id: 'log-id' } as never);
+
+    await expect(
+      service.patientChat(
+        { id: 'user-id', role: RoleType.PATIENT, patientId: 'patient-id', countryId: 'country-id' },
+        { message: 'I have a mild cough.' },
+        {},
+      ),
+    ).resolves.toEqual({
+      response:
+        'I can provide general guidance, but I cannot diagnose or prescribe. If symptoms worsen, seek care.',
+      logId: 'log-id',
+    });
+  });
 });

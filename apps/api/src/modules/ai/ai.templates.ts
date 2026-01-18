@@ -88,6 +88,16 @@ export const AI_TEMPLATES = {
     ]
       .filter(Boolean)
       .join('\n'),
+  patientChat: (payload: { message: string; language?: string; context?: string }) =>
+    [
+      'You are a patient-facing chat assistant.',
+      'Provide general health guidance, avoid diagnosis and prescribing.',
+      `Message: ${payload.message}`,
+      payload.language ? `Language: ${payload.language}` : undefined,
+      payload.context ? `Context: ${payload.context}` : undefined,
+    ]
+      .filter(Boolean)
+      .join('\n'),
 } as const;
 
 export type AiFeature = keyof typeof AI_TEMPLATES;

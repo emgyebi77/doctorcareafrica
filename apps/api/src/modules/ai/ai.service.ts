@@ -17,6 +17,7 @@ import { AiSymptomGuidanceDto } from './dto/ai-symptom-guidance.dto';
 import { AiTriageDto } from './dto/ai-triage.dto';
 import { AiNotesAssistantDto } from './dto/ai-notes-assistant.dto';
 import { AiSafetyCheckDto } from './dto/ai-safety-check.dto';
+import { AiPatientChatDto } from './dto/ai-patient-chat.dto';
 
 interface RequestMeta {
   ipAddress?: string;
@@ -49,6 +50,10 @@ export class AiService {
 
   async notesAssistant(user: RequestUser, dto: AiNotesAssistantDto, meta: RequestMeta) {
     return this.generate(user, 'notesAssistant', AI_TEMPLATES.notesAssistant(dto), meta);
+  }
+
+  async patientChat(user: RequestUser, dto: AiPatientChatDto, meta: RequestMeta) {
+    return this.generate(user, 'patientChat', AI_TEMPLATES.patientChat(dto), meta);
   }
 
   async followup(user: RequestUser, dto: AiFollowUpDto, meta: RequestMeta) {
@@ -176,6 +181,9 @@ export class AiService {
     }
     if (feature === 'notesAssistant') {
       return 'Drafted clinical note (non-diagnostic): Subjective, Objective, Assessment, Plan.';
+    }
+    if (feature === 'patientChat') {
+      return 'I can provide general guidance, but I cannot diagnose or prescribe. If symptoms worsen, seek care.';
     }
     return `AI ${feature} response placeholder.`;
   }
