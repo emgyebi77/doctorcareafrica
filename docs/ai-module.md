@@ -20,6 +20,7 @@ Location: `apps/api/src/modules/ai`
 
 Base path: `/api/v1/ai`
 - `POST /triage`
+- `POST /symptom-guidance`
 - `POST /summary`
 - `POST /followup`
 - `POST /education`
@@ -27,6 +28,14 @@ Base path: `/api/v1/ai`
 - `GET /logs` (admin only)
 
 ## Example payloads
+
+Symptom guidance
+- POST `/api/v1/ai/symptom-guidance`
+- Body:
+  - `symptoms`: `Mild headache`
+  - `duration`: `1 day`
+  - `age`: `32`
+  - `context`: `No fever, mild stress`
 
 Triage
 - POST `/api/v1/ai/triage`
@@ -61,6 +70,7 @@ Translate
 
 - Input length capped and blocked terms are rejected.
 - All requests are logged to `AiLog` for auditability.
+- Symptom guidance is explicitly non-diagnostic.
 
 ## Tests
 
