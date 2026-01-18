@@ -35,6 +35,8 @@ Operational logging
 - `RefreshToken` stores hashed refresh tokens for session rotation.
 - `AuthSession` tracks active login sessions.
 - `OtpChallenge` stores one-time codes for OTP login.
+- `DoctorOnboarding` tracks doctor onboarding status and approvals.
+- `DoctorKycDocument` stores KYC document metadata and review status.
 
 ## Migration command
 

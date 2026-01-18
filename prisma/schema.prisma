@@ -131,6 +131,27 @@ enum AuthSessionStatus {
   EXPIRED
 }
 
+enum DoctorOnboardingStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+}
+
+enum KycDocumentType {
+  ID_CARD
+  LICENSE
+  CERTIFICATE
+  PROOF_OF_ADDRESS
+  OTHER
+}
+
+enum KycDocumentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum AuditAction {
   CREATE
   UPDATE
@@ -321,6 +342,55 @@ model OtpChallenge {
   @@index([consumedAt])
 }
 
+model DoctorOnboarding {
+  id               String                 @id @default(uuid())
+  doctorId         String                 @unique
+  countryId        String
+  status           DoctorOnboardingStatus @default(DRAFT)
+  submittedAt      DateTime?
+  reviewedAt       DateTime?
+  reviewedByUserId String?
+  reviewNotes      String?
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+  deletedAt        DateTime?
+
+  doctor     Doctor  @relation(fields: [doctorId], references: [id])
+  country    Country @relation(fields: [countryId], references: [id])
+  reviewedBy User?   @relation(fields: [reviewedByUserId], references: [id])
+
+  @@index([doctorId])
+  @@index([countryId])
+  @@index([status])
+  @@index([reviewedByUserId])
+}
+
+model DoctorKycDocument {
+  id               String            @id @default(uuid())
+  doctorId         String
+  countryId        String
+  attachmentId     String
+  type             KycDocumentType
+  status           KycDocumentStatus @default(PENDING)
+  reviewedAt       DateTime?
+  reviewedByUserId String?
+  reviewNotes      String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  deletedAt        DateTime?
+
+  doctor     Doctor     @relation(fields: [doctorId], references: [id])
+  country    Country    @relation(fields: [countryId], references: [id])
+  attachment Attachment @relation(fields: [attachmentId], references: [id])
+  reviewedBy User?      @relation(fields: [reviewedByUserId], references: [id])
+
+  @@index([doctorId])
+  @@index([countryId])
+  @@index([type])
+  @@index([status])
+  @@index([reviewedByUserId])
+}
+
 model Patient {
   id                    String   @id @default(uuid())
   userId                String   @unique
@@ -378,6 +448,8 @@ model Doctor {
   prescriptions Prescription[]
   payments      Payment[]
   aiLogs        AiLog[]
+  onboarding    DoctorOnboarding?
+  kycDocuments  DoctorKycDocument[]
 
   @@index([countryId])
   @@index([specialty])
