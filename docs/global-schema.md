@@ -37,6 +37,7 @@ Operational logging
 - `OtpChallenge` stores one-time codes for OTP login.
 - `DoctorOnboarding` tracks doctor onboarding status and approvals.
 - `DoctorKycDocument` stores KYC document metadata and review status.
+- `VideoSession` includes optional `jitsiRegion` for multi-region routing.
 
 ## Migration command
 

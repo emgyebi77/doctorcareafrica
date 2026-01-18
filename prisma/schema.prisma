@@ -788,6 +788,7 @@ model VideoSession {
   appointmentId String           @unique
   countryId    String
   provider     String
+  jitsiRegion  String?
   status       VideoSessionStatus @default(SCHEDULED)
   roomId       String?
   joinUrl      String?
@@ -804,6 +805,7 @@ model VideoSession {
 
   @@index([status])
   @@index([countryId])
+  @@index([jitsiRegion])
 }
 
 model VideoToken {
