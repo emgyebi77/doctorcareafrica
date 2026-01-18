@@ -18,8 +18,9 @@ Location: `apps/api/src/modules/auth`
 
 ## Prisma updates
 
-The module adds a `RefreshToken` model to store hashed refresh tokens for JWT
-rotation. See `prisma/schema.prisma`.
+The module adds `RefreshToken`, `AuthSession`, and `OtpChallenge` models to
+support token rotation, session tracking, and OTP login. See
+`prisma/schema.prisma`.
 
 ## API routes
 
