@@ -8,3 +8,4 @@ Patient onboarding documentation is in `docs/patient-onboarding.md`.
 Doctor onboarding documentation is in `docs/doctor-onboarding.md`.
 Appointment scheduling documentation is in `docs/appointment-scheduling.md`.
 Telemedicine documentation is in `docs/telemedicine.md`.
+Payment module documentation is in `docs/payment-module.md`.
